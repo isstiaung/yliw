@@ -45,15 +45,20 @@ export default function WeekBox({ weekData, birthDate, className = '' }: WeekBox
     <div
       className={`week-box relative group ${className}`}
       style={{
-        backgroundColor,
-        borderColor,
+        '--bg-color': backgroundColor,
+        '--border-color': borderColor,
+        backgroundColor: backgroundColor,
+        borderColor: borderColor,
         width: '10px',
         height: '10px',
         minWidth: '10px',
         minHeight: '10px',
         border: '1px solid',
-        cursor: 'pointer'
-      }}
+        cursor: 'pointer',
+        WebkitPrintColorAdjust: 'exact',
+        printColorAdjust: 'exact',
+        colorAdjust: 'exact'
+      } as React.CSSProperties}
       title={tooltipText}
     >
       {/* Icon for events */}

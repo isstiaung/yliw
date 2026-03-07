@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { useLifeData } from '@/contexts/LifeDataContext';
-import SetupForm from '@/components/SetupForm';
-import EventForm from '@/components/EventForm';
+import { useLifeData } from "@/contexts/LifeDataContext";
+import LifeGrid from "@/components/LifeGrid";
 
-export default function Home() {
+export default function Calendar() {
   const { state } = useLifeData();
 
   if (state.isLoading) {
@@ -17,14 +16,5 @@ export default function Home() {
       </div>
     );
   }
-
-  // Render different components based on current phase
-  switch (state.currentPhase) {
-    case 'setup':
-      return <SetupForm />;
-    case 'events':
-      return <EventForm />;
-    default:
-      return <SetupForm />;
-  }
+  return <LifeGrid />;
 }

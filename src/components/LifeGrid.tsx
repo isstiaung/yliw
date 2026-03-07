@@ -6,10 +6,11 @@ import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import PrintControls from './PrintControls';
 import { FaArrowLeft, FaEdit, FaCog } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 export default function LifeGrid() {
-  const { state, setPhase, clearData } = useLifeData();
-
+  const { state, clearData } = useLifeData();
+  const router = useRouter();
   if (!state.userData) {
     return null;
   }
@@ -21,7 +22,7 @@ export default function LifeGrid() {
   );
 
   const goBackToEvents = () => {
-    setPhase('events');
+    router.push("/");
   };
 
   const startOver = () => {
@@ -81,14 +82,14 @@ export default function LifeGrid() {
                 <h1 className="title text-4xl font-bold text-gray-900 mb-2">
                   {state.userData.name}&apos;s Life in Weeks
                 </h1>
-                <p className="text-gray-600">
+                <p className="subtitle text-gray-600">
                   Born {state.userData.birthDate.toLocaleDateString()} • 
                   Each box represents one week of life
                 </p>
               </div>
 
               {/* Legend */}
-              <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm">
+              <div className="grid grid-cols-4 flex-wrap justify-center gap-6 mb-8 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-gray-300 border border-gray-400 rounded-sm" />
                   <span className="text-gray-700">Future weeks</span>
@@ -101,10 +102,15 @@ export default function LifeGrid() {
                   <div className="w-4 h-4 bg-yellow-400 border border-yellow-500 rounded-sm" />
                   <span className="text-gray-700">Current week</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-500 border border-blue-600 rounded-sm" />
-                  <span className="text-gray-700">Life events</span>
-                </div>
+                {
+                  state.userData.events.map((event)=>  {
+                    return <div key={event.id} className="flex items-center gap-2">
+                    <div style={{background: event.color}} className={`w-4 h-4 border border-blue-600 rounded-sm`} />
+                    <span className="text-gray-700">{event.title}</span>
+                  </div>
+                  }
+                )
+                }
               </div>
 
               {/* Life Grid */}
@@ -124,12 +130,11 @@ export default function LifeGrid() {
                 {/* Grid with age labels */}
                 <div className="flex">
                   {/* Age labels column */}
-                  <div className="w-12 flex-shrink-0 pr-2">
+                  <div className="w-12 flex-shrink-0 pr-2 grid" style={{gridTemplateRows : `repeat(${state.userData.endAge}, minmax(10px, 1fr))`}}>
                     {years.map(year => (
                       <div
                         key={year}
                         className="text-xs text-gray-500 text-right flex items-center justify-end"
-                        style={{ height: `${12+(year/3)}px` }} // 8px + 1px gap
                       >
                         {(year) % 5 === 0 ? `Age ${year}` : ''}
                       </div>
@@ -165,31 +170,31 @@ export default function LifeGrid() {
               )}
 
               {/* Statistics */}
-              <div className="mt-8 pt-8 border-t border-gray-200 print-hide">
+              <div className="mt-8 pt-8 border-t border-gray-200">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                   <div>
                     <div className="text-2xl font-bold text-blue-600">
                       {weekData.filter(w => w.isPast).length}
                     </div>
-                    <div className="text-sm text-gray-600">Weeks lived</div>
+                    <div className="text-sm text-gray-600 print-show">Weeks lived</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-green-600">
                       {weekData.filter(w => !w.isPast && !w.isCurrent).length}
                     </div>
-                    <div className="text-sm text-gray-600">Weeks remaining</div>
+                    <div className="text-sm text-gray-600 print-show">Weeks remaining</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-purple-600">
                       {Math.round((weekData.filter(w => w.isPast).length / weekData.length) * 100)}%
                     </div>
-                    <div className="text-sm text-gray-600">Life completed</div>
+                    <div className="text-sm text-gray-600 print-show">Life completed</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-orange-600">
                       {state.userData.events.length}
                     </div>
-                    <div className="text-sm text-gray-600">Life events</div>
+                    <div className="text-sm text-gray-600 print-show">Life events</div>
                   </div>
                 </div>
               </div>

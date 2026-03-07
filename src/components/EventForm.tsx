@@ -6,6 +6,7 @@ import { LifeEvent } from '@/types';
 import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
 import IconPicker, { getIconComponent } from './IconPicker';
 import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 const eventColors = [
   '#ef4444', // red
@@ -31,7 +32,8 @@ interface EventFormData {
 }
 
 export default function EventForm() {
-  const { state, addEvent, updateEvent, deleteEvent, setPhase } = useLifeData();
+  const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
+  const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>({
@@ -186,7 +188,7 @@ export default function EventForm() {
   };
 
   const proceedToCalendar = () => {
-    setPhase('calendar');
+    router.push("/calendar");
   };
 
   if (!state.userData) {
