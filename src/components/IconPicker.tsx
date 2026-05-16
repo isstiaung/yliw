@@ -146,11 +146,11 @@ export default function IconPicker({ selectedIcon, onIconSelect, className = '' 
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="text-sm font-medium text-gray-700">Select an Icon</div>
-      
+      <div className="text-sm font-medium text-[var(--ink)]">Icon</div>
+
       {categories.map(category => (
         <div key={category} className="space-y-2">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-[var(--muted)]">
             {category}
           </div>
           <div className="grid grid-cols-8 gap-2">
@@ -166,10 +166,10 @@ export default function IconPicker({ selectedIcon, onIconSelect, className = '' 
                     type="button"
                     onClick={() => onIconSelect(option.name)}
                     className={`
-                      p-2 rounded-lg border-2 transition-all duration-200 hover:scale-105
-                      ${isSelected 
-                        ? 'border-blue-500 bg-blue-50 text-blue-600' 
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800'
+                      p-2 rounded-md border transition-all duration-150 hover:scale-105
+                      ${isSelected
+                        ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                        : 'border-[var(--line)] hover:border-[var(--muted)]/50 text-[var(--muted)] hover:text-[var(--ink)]'
                       }
                     `}
                     title={option.name}

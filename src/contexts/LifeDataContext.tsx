@@ -39,59 +39,56 @@ function lifeDataReducer(state: LifeDataState, action: LifeDataAction): LifeData
         ...state,
         currentPhase: action.payload,
       };
-    case 'ADD_EVENT':
+    case 'ADD_EVENT': {
       if (!state.userData) return state;
-      
+
       const weekRange = mapDateRangeToWeeks(
-        state.userData.birthDate, 
-        action.payload.startDate, 
+        state.userData.birthDate,
+        action.payload.startDate,
         action.payload.endDate
       );
-      
+
       const newEvent: LifeEvent = {
         ...action.payload,
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         startWeekNumber: weekRange.startWeek,
         endWeekNumber: weekRange.endWeek,
       };
-      
-      const updatedUserData = {
-        ...state.userData,
-        events: [...state.userData.events, newEvent],
-      };
-      
-      return {
-        ...state,
-        userData: updatedUserData,
-      };
-    case 'UPDATE_EVENT':
-      if (!state.userData) return state;
-      
-      const updatedEvents = state.userData.events.map(event =>
-        event.id === action.payload.id ? action.payload : event
-      );
-      
+
       return {
         ...state,
         userData: {
           ...state.userData,
-          events: updatedEvents,
+          events: [...state.userData.events, newEvent],
         },
       };
-    case 'DELETE_EVENT':
+    }
+    case 'UPDATE_EVENT': {
       if (!state.userData) return state;
-      
-      const filteredEvents = state.userData.events.filter(
-        event => event.id !== action.payload
-      );
-      
+
       return {
         ...state,
         userData: {
           ...state.userData,
-          events: filteredEvents,
+          events: state.userData.events.map(event =>
+            event.id === action.payload.id ? action.payload : event
+          ),
         },
       };
+    }
+    case 'DELETE_EVENT': {
+      if (!state.userData) return state;
+
+      return {
+        ...state,
+        userData: {
+          ...state.userData,
+          events: state.userData.events.filter(
+            event => event.id !== action.payload
+          ),
+        },
+      };
+    }
     case 'LOAD_DATA':
       return {
         ...state,

@@ -31,27 +31,28 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md p-4 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Print Options</h3>
-      
-      {/* Print Size Selection */}
+    <div className={`bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
+      <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
+        Print
+      </h3>
+
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Print Size
+        <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+          Paper size
         </label>
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(printConfigs).map(([size, config]) => (
             <button
               key={size}
               onClick={() => handleSizeChange(size as PrintSize)}
-              className={`p-3 text-sm border rounded-lg transition-colors ${
+              className={`p-2.5 text-sm border rounded-md transition-colors ${
                 selectedSize === size
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                  ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                  : 'border-[var(--line)] hover:border-[var(--muted)]/50 text-[var(--ink)]'
               }`}
             >
               <div className="font-medium">{size}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-[10px] text-[var(--muted)]">
                 {config.width} × {config.height}
               </div>
             </button>
@@ -59,42 +60,21 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
         </div>
       </div>
 
-      {/* Size Information */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-        <div className="text-sm text-gray-700">
-          <div className="font-medium mb-1">Selected: {selectedSize}</div>
-          <div className="text-xs text-gray-600">
-            Dimensions: {printConfigs[selectedSize].width} × {printConfigs[selectedSize].height}
-          </div>
-          <div className="text-xs text-gray-600">
-            Box size: {printConfigs[selectedSize].boxSize}
-          </div>
-        </div>
-      </div>
+      <button
+        onClick={handlePrint}
+        className="w-full bg-[var(--ink)] text-[var(--paper)] px-4 py-3 rounded-md font-medium hover:bg-[var(--accent)] transition-colors flex items-center justify-center gap-2"
+      >
+        <FaPrint className="w-3.5 h-3.5" />
+        Print {selectedSize}
+      </button>
 
-      {/* Action Buttons */}
-      <div className="space-y-2">
-        <button
-          onClick={handlePrint}
-          className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
-        >
-          <FaPrint className="w-4 h-4" />
-          Print Calendar
-        </button>
-      </div>
-
-      {/* Print Tips */}
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-        <div className="text-sm text-blue-800">
-          <div className="font-medium mb-1">Print Tips:</div>
-          <ul className="text-xs space-y-1 text-blue-700">
-            <li className="font-semibold">• IMPORTANT: Enable &quot;Background graphics&quot; in print dialog to show colors!</li>
-            <li>• To save as PDF: Select &quot;Save as PDF&quot; as destination</li>
-            <li>• Use landscape orientation for better fit</li>
-            <li>• For best quality, use high-resolution settings</li>
-            <li>• A4 and A3 work well for most home printers</li>
-          </ul>
-        </div>
+      <div className="mt-4 p-3 bg-[var(--paper)] border border-[var(--line)] rounded-md">
+        <ul className="text-xs space-y-1 text-[var(--muted)]">
+          <li className="text-[var(--ink)] font-medium">Enable “Background graphics” to keep colours.</li>
+          <li>Set paper to {selectedSize}, portrait, margins “Default”.</li>
+          <li>Choose “Save as PDF” to export a file.</li>
+          <li>A4 and A3 suit most home printers; A0–A2 are poster sizes.</li>
+        </ul>
       </div>
     </div>
   );

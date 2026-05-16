@@ -14,17 +14,18 @@ interface WeekBoxProps {
 export default function WeekBox({ weekData, birthDate, className = '' }: WeekBoxProps) {
   const { isPast, isCurrent, event } = weekData;
   
-  // Default colors
-  let backgroundColor = '#f3f4f6'; // Default light gray
-  let borderColor = '#e5e7eb';
-  
+  // Default: a future, unlived week
+  let backgroundColor = '#e8e1d0';
+  let borderColor = '#d8cfba';
+
   if (isPast) {
-    backgroundColor = '#d1d5db'; // Darker gray for past weeks
+    backgroundColor = '#2a241d'; // Ink — weeks already lived
+    borderColor = '#2a241d';
   }
-  
+
   if (isCurrent) {
-    backgroundColor = '#fbbf24'; // Yellow for current week
-    borderColor = '#f59e0b';
+    backgroundColor = '#b4471f'; // Accent — the week you're in now
+    borderColor = '#8f3315';
   }
   
   // Event colors override defaults
@@ -49,10 +50,8 @@ export default function WeekBox({ weekData, birthDate, className = '' }: WeekBox
         '--border-color': borderColor,
         backgroundColor: backgroundColor,
         borderColor: borderColor,
-        width: '10px',
-        height: '10px',
-        minWidth: '10px',
-        minHeight: '10px',
+        width: 'var(--week-size, 10px)',
+        height: 'var(--week-size, 10px)',
         border: '1px solid',
         cursor: 'pointer',
         WebkitPrintColorAdjust: 'exact',
@@ -61,40 +60,49 @@ export default function WeekBox({ weekData, birthDate, className = '' }: WeekBox
       } as React.CSSProperties}
       title={tooltipText}
     >
-      {/* Icon for events */}
+      {/* Icon for events — scales with the box so it never overflows */}
       {IconComponent && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <IconComponent 
-            className="w-4 h-4 text-white opacity-80"
-            // style={{ fontSize: '8px' }}
+          <IconComponent
+            className="text-white opacity-85"
+            style={{
+              width: 'calc(var(--week-size, 10px) * 0.72)',
+              height: 'calc(var(--week-size, 10px) * 0.72)',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Current week indicator */}
+      {isCurrent && !event && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className="bg-white rounded-full opacity-90"
+            style={{
+              width: 'calc(var(--week-size, 10px) * 0.3)',
+              height: 'calc(var(--week-size, 10px) * 0.3)',
+            }}
           />
         </div>
       )}
       
-      {/* Current week indicator */}
-      {isCurrent && !event && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-1 h-1 bg-white rounded-full opacity-90" />
-        </div>
-      )}
-      
       {/* Hover tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-[var(--ink)] text-[var(--paper)] text-xs rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
         <div className="text-center">
           <div className="font-medium">
             Week {weekData.weekNumber}
           </div>
-          <div className="text-gray-300">
+          <div className="text-[var(--paper)]/60">
             Age {Math.ceil(weekData.weekNumber / 52)}
           </div>
           {event && (
-            <div className="text-yellow-300 mt-1">
+            <div className="text-[var(--accent)] font-medium mt-1" style={{ color: '#e8a87f' }}>
               {event.title}
             </div>
           )}
         </div>
         {/* Tooltip arrow */}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
       </div>
     </div>
   );

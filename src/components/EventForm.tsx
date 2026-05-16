@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { LifeEvent } from '@/types';
-import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
+import { mapDateRangeToWeeks, parseLocalDate, formatDateForInput } from '@/utils/dateCalculations';
 import IconPicker, { getIconComponent } from './IconPicker';
 import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
@@ -65,8 +65,8 @@ export default function EventForm() {
   const openEditForm = (event: LifeEvent) => {
     setFormData({
       title: event.title,
-      startDate: event.startDate.toISOString().split('T')[0],
-      endDate: event.endDate.toISOString().split('T')[0],
+      startDate: formatDateForInput(event.startDate),
+      endDate: formatDateForInput(event.endDate),
       color: event.color,
       icon: event.icon
     });
@@ -119,9 +119,9 @@ export default function EventForm() {
     }
 
     if (formData.startDate && formData.endDate) {
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      
+      const startDate = parseLocalDate(formData.startDate);
+      const endDate = parseLocalDate(formData.endDate);
+
       if (endDate < startDate) {
         newErrors.endDate = 'End date cannot be before start date';
       }
@@ -154,8 +154,8 @@ export default function EventForm() {
 
     const eventData = {
       title: formData.title.trim(),
-      startDate: new Date(formData.startDate),
-      endDate: new Date(formData.endDate),
+      startDate: parseLocalDate(formData.startDate),
+      endDate: parseLocalDate(formData.endDate),
       color: formData.color,
       icon: formData.icon
     };
@@ -197,131 +197,142 @@ export default function EventForm() {
 
   const IconComponent = getIconComponent(formData.icon);
 
+  const inputClass = (hasError: boolean) =>
+    `w-full px-4 py-3 bg-[var(--surface)] border rounded-md text-[var(--ink)] placeholder:text-[var(--muted)]/60 outline-none transition-shadow focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] ${
+      hasError ? 'border-[var(--accent)]' : 'border-[var(--line)]'
+    }`;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-[var(--paper)] paper-grain p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Add Life Events for {state.userData.name}
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_12px_40px_-16px_rgba(31,27,22,0.16)] p-8 sm:p-10">
+          <div className="mb-8">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
+              Step two
+            </p>
+            <h1 className="font-display text-3xl text-[var(--ink)] mb-1">
+              {state.userData.name}&apos;s milestones
             </h1>
-            <p className="text-gray-600">
-              Add important dates and milestones to your life calendar
+            <p className="text-[var(--muted)]">
+              Mark the chapters and moments that shape your weeks.
             </p>
           </div>
 
-          {/* Add Event Button */}
-          <div className="mb-8">
+          <div className="flex flex-wrap items-center gap-3 mb-8">
             <button
               onClick={openAddForm}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+              className="bg-[var(--ink)] text-[var(--paper)] px-5 py-2.5 rounded-md font-medium hover:bg-[var(--accent)] transition-colors flex items-center gap-2"
             >
-              <FaPlus className="w-4 h-4" />
-              Add New Event
+              <FaPlus className="w-3.5 h-3.5" />
+              Add event
+            </button>
+            <button
+              onClick={proceedToCalendar}
+              className="px-5 py-2.5 rounded-md font-medium border border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
+            >
+              <FaEye className="w-3.5 h-3.5" />
+              View life calendar
             </button>
           </div>
 
-          {/* Events List */}
-          {state.userData.events.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Events</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {state.userData.events.length > 0 ? (
+            <div>
+              <h2 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
+                {state.userData.events.length} event{state.userData.events.length === 1 ? '' : 's'}
+              </h2>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {state.userData.events
+                  .slice()
                   .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
                   .map(event => {
                     const EventIcon = getIconComponent(event.icon);
                     const isSameDate = event.startDate.toDateString() === event.endDate.toDateString();
-                    
+
                     return (
                       <div
                         key={event.id}
-                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                        className="group bg-[var(--paper)] rounded-lg p-4 border border-[var(--line)] hover:border-[var(--muted)]/40 transition-colors"
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             {EventIcon && (
                               <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
                                 style={{ backgroundColor: event.color }}
                               >
                                 <EventIcon className="w-4 h-4" />
                               </div>
                             )}
-                            <h3 className="font-medium text-gray-900">{event.title}</h3>
+                            <h3 className="font-medium text-[var(--ink)] truncate">{event.title}</h3>
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openEditForm(event)}
-                              className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                              className="p-1.5 text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
                               title="Edit event"
                             >
                               <FaEdit className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => handleDeleteEvent(event.id)}
-                              className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                              className="p-1.5 text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
                               title="Delete event"
                             >
                               <FaTrash className="w-3 h-3" />
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {isSameDate 
+                        <p className="text-sm text-[var(--muted)]">
+                          {isSameDate
                             ? event.startDate.toLocaleDateString()
-                            : `${event.startDate.toLocaleDateString()} - ${event.endDate.toLocaleDateString()}`
-                          }
+                            : `${event.startDate.toLocaleDateString()} – ${event.endDate.toLocaleDateString()}`}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {event.startWeekNumber === event.endWeekNumber 
-                            ? `Week ${event.startWeekNumber}`
-                            : `Weeks ${event.startWeekNumber}-${event.endWeekNumber}`
-                          }
+                        <p className="text-xs font-mono text-[var(--muted)]/70 mt-1">
+                          {event.startWeekNumber === event.endWeekNumber
+                            ? `week ${event.startWeekNumber}`
+                            : `weeks ${event.startWeekNumber}–${event.endWeekNumber}`}
                         </p>
                       </div>
                     );
                   })}
               </div>
             </div>
+          ) : (
+            <div className="border border-dashed border-[var(--line)] rounded-lg py-12 text-center">
+              <p className="text-[var(--muted)]">No events yet — add your first milestone above.</p>
+            </div>
           )}
-
-          {/* Proceed Button */}
-          <div className="text-center">
-            <button
-              onClick={proceedToCalendar}
-              className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors flex items-center gap-2 mx-auto"
-            >
-              <FaEye className="w-4 h-4" />
-              View Life Calendar
-            </button>
-            <p className="text-sm text-gray-500 mt-2">
-              You can always come back to add more events later
-            </p>
-          </div>
         </div>
       </div>
 
       {/* Event Form Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div
+          className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={closeForm}
+        >
+          <div
+            className="bg-[var(--surface)] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {editingEvent ? 'Edit Event' : 'Add New Event'}
+                <h2 className="font-display text-2xl text-[var(--ink)]">
+                  {editingEvent ? 'Edit event' : 'New event'}
                 </h2>
                 <button
                   onClick={closeForm}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-[var(--muted)] hover:text-[var(--ink)] text-2xl leading-none"
+                  aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Title
+                  <label htmlFor="title" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+                    Event title
                   </label>
                   <input
                     type="text"
@@ -329,18 +340,16 @@ export default function EventForm() {
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                      errors.title ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g., College Years, Marriage, Career at Google"
+                    className={inputClass(!!errors.title)}
+                    placeholder="e.g. University, Marriage, Career at Google"
                   />
-                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                  {errors.title && <p className="mt-1 text-sm text-[var(--accent)]">{errors.title}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
+                    <label htmlFor="startDate" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+                      Start date
                     </label>
                     <input
                       type="date"
@@ -348,16 +357,14 @@ export default function EventForm() {
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                        errors.startDate ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={inputClass(!!errors.startDate)}
                     />
-                    {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
+                    {errors.startDate && <p className="mt-1 text-sm text-[var(--accent)]">{errors.startDate}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
+                    <label htmlFor="endDate" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+                      End date
                     </label>
                     <input
                       type="date"
@@ -365,32 +372,33 @@ export default function EventForm() {
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                        errors.endDate ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={inputClass(!!errors.endDate)}
                     />
-                    {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
+                    {errors.endDate && <p className="mt-1 text-sm text-[var(--accent)]">{errors.endDate}</p>}
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500">
-                  For single-day events, use the same date for both start and end.
+                <p className="text-sm text-[var(--muted)]">
+                  For a single-day event, use the same date for both.
                 </p>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Color
+                  <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+                    Colour
                   </label>
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {eventColors.map(color => (
                       <button
                         key={color}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, color }))}
-                        className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                          formData.color === color ? 'border-gray-800 scale-110' : 'border-gray-300'
+                        className={`w-9 h-9 rounded-md transition-transform ${
+                          formData.color === color
+                            ? 'ring-2 ring-offset-2 ring-offset-[var(--surface)] ring-[var(--ink)] scale-110'
+                            : 'hover:scale-105'
                         }`}
                         style={{ backgroundColor: color }}
+                        aria-label={`Colour ${color}`}
                       />
                     ))}
                   </div>
@@ -404,8 +412,8 @@ export default function EventForm() {
                 </div>
 
                 {/* Preview */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Preview</div>
+                <div className="bg-[var(--paper)] border border-[var(--line)] rounded-lg p-4">
+                  <div className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-3">Preview</div>
                   <div className="flex items-center gap-3">
                     {IconComponent && (
                       <div
@@ -416,33 +424,33 @@ export default function EventForm() {
                       </div>
                     )}
                     <div>
-                      <div className="font-medium text-gray-900">
-                        {formData.title || 'Event Title'}
+                      <div className="font-medium text-[var(--ink)]">
+                        {formData.title || 'Event title'}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-[var(--muted)]">
                         {formData.startDate && formData.endDate ? (
-                          formData.startDate === formData.endDate ? 
-                            new Date(formData.startDate).toLocaleDateString() :
-                            `${new Date(formData.startDate).toLocaleDateString()} - ${new Date(formData.endDate).toLocaleDateString()}`
+                          formData.startDate === formData.endDate ?
+                            parseLocalDate(formData.startDate).toLocaleDateString() :
+                            `${parseLocalDate(formData.startDate).toLocaleDateString()} – ${parseLocalDate(formData.endDate).toLocaleDateString()}`
                         ) : 'Select dates'}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4">
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={closeForm}
-                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    className="flex-1 px-4 py-3 border border-[var(--line)] text-[var(--ink)] rounded-md font-medium hover:bg-[var(--paper)] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                    className="flex-1 bg-[var(--ink)] text-[var(--paper)] px-4 py-3 rounded-md font-medium hover:bg-[var(--accent)] transition-colors"
                   >
-                    {editingEvent ? 'Update Event' : 'Add Event'}
+                    {editingEvent ? 'Update event' : 'Add event'}
                   </button>
                 </div>
               </form>
