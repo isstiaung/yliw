@@ -33,6 +33,7 @@ export interface PrintConfig {
   width: string;
   height: string;
   boxSize: string;
+  gap: string;
   fontSize: string;
 }
 

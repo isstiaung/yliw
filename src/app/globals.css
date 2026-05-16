@@ -1,28 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Editorial "memento mori" palette — warm paper & ink, one restrained accent */
+  --paper: #f7f4ec;
+  --surface: #fffdf7;
+  --ink: #1f1b16;
+  --muted: #7a7065;
+  --line: #e4ddcd;
+  --accent: #b4471f;
+  --accent-soft: #f0e3d8;
+
+  /* Week states */
+  --week-future: #e8e1d0;
+  --week-future-border: #d8cfba;
+  --week-past: #2a241d;
+  --week-past-border: #2a241d;
+  --week-current: var(--accent);
+  --week-current-border: #8f3315;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-serif: var(--font-fraunces);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.015em;
+}
+
+/* Subtle paper grain so large empty areas don't feel flat */
+.paper-grain {
+  background-image: radial-gradient(circle at 1px 1px, rgba(31, 27, 22, 0.035) 1px, transparent 0);
+  background-size: 22px 22px;
 }
 
 /* Print styles for color preservation */
@@ -32,43 +61,23 @@ body {
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  
+
   body {
     background: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  
+
+  .paper-grain {
+    background-image: none !important;
+  }
+
   .week-box {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
     page-break-inside: avoid !important;
-  }
-  
-  /* Force colors for common states */
-  .week-box[style*="#f3f4f6"] {
-    background-color: #f3f4f6 !important;
-  }
-  
-  .week-box[style*="#d1d5db"] {
-    background-color: #d1d5db !important;
-  }
-  
-  .week-box[style*="#fbbf24"] {
-    background-color: #fbbf24 !important;
-  }
-  
-  /* Common event colors */
-  .week-box[style*="#ef4444"] {
-    background-color: #ef4444 !important;
-  }
-  
-  .week-box[style*="#3b82f6"] {
-    background-color: #3b82f6 !important;
-  }
-  
-  .week-box[style*="#22c55e"] {
-    background-color: #22c55e !important;
+    background-color: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
   }
 }

@@ -5,7 +5,8 @@ import { useLifeData } from '@/contexts/LifeDataContext';
 import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import PrintControls from './PrintControls';
-import { FaArrowLeft, FaEdit, FaCog } from 'react-icons/fa';
+import DataControls from './DataControls';
+import { FaArrowLeft, FaEdit, FaRedo } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function LifeGrid() {
@@ -15,145 +16,149 @@ export default function LifeGrid() {
     return null;
   }
 
+  const { userData } = state;
+
   const weekData = generateWeekData(
-    state.userData.birthDate,
-    state.userData.endAge,
-    state.userData.events
+    userData.birthDate,
+    userData.endAge,
+    userData.events
   );
 
-  const goBackToEvents = () => {
-    router.push("/");
-  };
+  const goBackToEvents = () => router.push('/');
 
   const startOver = () => {
-    if (window.confirm('Are you sure you want to start over? This will clear all your data.')) {
+    if (window.confirm('Start over? This permanently clears all your data.')) {
       clearData();
+      router.push('/');
     }
   };
 
-  // Group weeks by year for better organization
-  const weeksByYear: { [year: number]: typeof weekData } = {};
-  weekData.forEach(week => {
-    if (!weeksByYear[week.year]) {
-      weeksByYear[week.year] = [];
-    }
-    weeksByYear[week.year].push(week);
-  });
+  // Group weeks by year so we can render age labels alongside the grid
+  const years = Array.from({ length: userData.endAge }, (_, i) => i + 1);
 
-  const years = Object.keys(weeksByYear).map(Number).sort((a, b) => a - b);
+  const weeksLived = weekData.filter(w => w.isPast).length;
+  const weeksRemaining = weekData.filter(w => !w.isPast && !w.isCurrent).length;
+  const pctLived = Math.round((weeksLived / weekData.length) * 100);
+
+  const stats = [
+    { label: 'Weeks lived', value: weeksLived.toLocaleString() },
+    { label: 'Weeks remaining', value: weeksRemaining.toLocaleString() },
+    { label: 'Life lived', value: `${pctLived}%` },
+    { label: 'Milestones', value: userData.events.length.toLocaleString() },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--paper)] paper-grain">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b print-hide">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-[var(--surface)]/80 backdrop-blur border-b border-[var(--line)] print-hide">
+        <div className="max-w-7xl mx-auto px-4 py-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={goBackToEvents}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
               >
-                <FaArrowLeft className="w-4 h-4" />
-                Back to Events
+                <FaArrowLeft className="w-3.5 h-3.5" />
+                Events
               </button>
-              <div className="h-6 w-px bg-gray-300" />
+              <div className="h-5 w-px bg-[var(--line)]" />
               <button
                 onClick={startOver}
-                className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+                className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
               >
-                <FaCog className="w-4 h-4" />
-                Start Over
+                <FaRedo className="w-3 h-3" />
+                Start over
               </button>
             </div>
-            <div className="text-sm text-gray-600">
-              {state.userData.events.length} events • {weekData.length} weeks
+            <div className="text-xs font-mono text-[var(--muted)]">
+              {userData.events.length} events · {weekData.length} weeks
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Main Calendar */}
           <div className="lg:col-span-3">
-            <div className="life-calendar-container bg-white rounded-2xl shadow-lg p-8">
+            <div className="life-calendar-container bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_16px_50px_-20px_rgba(31,27,22,0.2)] p-6 sm:p-10">
               {/* Title */}
-              <div className="text-center mb-8">
-                <h1 className="title text-4xl font-bold text-gray-900 mb-2">
-                  {state.userData.name}&apos;s Life in Weeks
+              <div className="calendar-head text-center mb-8">
+                <p className="text-xs font-mono uppercase tracking-[0.22em] text-[var(--accent)] mb-3">
+                  Memento mori
+                </p>
+                <h1 className="title font-display text-3xl sm:text-4xl text-[var(--ink)] mb-2">
+                  {userData.name}&apos;s Life in Weeks
                 </h1>
-                <p className="subtitle text-gray-600">
-                  Born {state.userData.birthDate.toLocaleDateString()} • 
-                  Each box represents one week of life
+                <p className="subtitle text-sm text-[var(--muted)]">
+                  Born {userData.birthDate.toLocaleDateString()} · each square is one week
                 </p>
               </div>
 
               {/* Legend */}
-              <div className="grid grid-cols-4 flex-wrap justify-center gap-6 mb-8 text-sm">
+              <div className="legend flex flex-wrap justify-center gap-x-6 gap-y-2 mb-8 text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gray-300 border border-gray-400 rounded-sm" />
-                  <span className="text-gray-700">Future weeks</span>
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: '#e8e1d0', border: '1px solid #d8cfba' }} />
+                  <span className="text-[var(--muted)]">Future</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gray-400 border border-gray-500 rounded-sm" />
-                  <span className="text-gray-700">Past weeks</span>
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: '#2a241d' }} />
+                  <span className="text-[var(--muted)]">Lived</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-400 border border-yellow-500 rounded-sm" />
-                  <span className="text-gray-700">Current week</span>
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: 'var(--accent)' }} />
+                  <span className="text-[var(--muted)]">This week</span>
                 </div>
-                {
-                  state.userData.events.map((event)=>  {
-                    return <div key={event.id} className="flex items-center gap-2">
-                    <div style={{background: event.color}} className={`w-4 h-4 border border-blue-600 rounded-sm`} />
-                    <span className="text-gray-700">{event.title}</span>
+                {userData.events.map(event => (
+                  <div key={event.id} className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-[2px]" style={{ background: event.color }} />
+                    <span className="text-[var(--muted)]">{event.title}</span>
                   </div>
-                  }
-                )
-                }
+                ))}
               </div>
 
-              {/* Life Grid */}
-              <div className="life-grid">
-                {/* Week number labels at top */}
-                <div className="flex mb-2">
-                  <div className="w-12 flex-shrink-0"></div> {/* Space for age labels */}
-                  <div className="flex justify-between flex-1 text-xs text-gray-500">
-                    {/* {[...Array(Math.ceil(52 / 10))].map((_, i) => (
-                      <span key={i} className="w-0 text-center">
-                        {(i + 1) * 10}
-                      </span>
-                    ))} */}
-                  </div>
-                </div>
-
-                {/* Grid with age labels */}
-                <div className="flex">
-                  {/* Age labels column */}
-                  <div className="w-12 flex-shrink-0 pr-2 grid" style={{gridTemplateRows : `repeat(${state.userData.endAge}, minmax(10px, 1fr))`}}>
+              {/* Life Grid — --week-size / --week-gap drive both the boxes
+                  and the grid tracks, so the print stylesheet can rescale
+                  the whole layout by overriding just these two variables. */}
+              <div
+                className="life-grid overflow-x-auto"
+                style={{ '--week-size': '10px', '--week-gap': '4px' } as React.CSSProperties}
+              >
+                <div className="flex min-w-fit mx-auto w-fit">
+                  {/* Age labels column — same row size + gap so labels stay
+                      aligned with the week rows at every paper size */}
+                  <div
+                    className="flex-shrink-0 pr-2 grid"
+                    style={{
+                      gridAutoRows: 'var(--week-size)',
+                      rowGap: 'var(--week-gap)',
+                    }}
+                  >
                     {years.map(year => (
                       <div
                         key={year}
-                        className="text-xs text-gray-500 text-right flex items-center justify-end"
+                        className="font-mono text-[var(--muted)]/70 text-right flex items-center justify-end pr-1"
+                        style={{ fontSize: 'calc(var(--week-size) * 0.85)' }}
                       >
-                        {(year) % 5 === 0 ? `Age ${year}` : ''}
+                        {year % 5 === 0 ? year : ''}
                       </div>
                     ))}
                   </div>
 
-                  {/* Weeks grid */}
-                  <div 
-                    className="grid gap-1 flex-1"
+                  {/* Weeks grid — 52 columns, rows flow automatically */}
+                  <div
+                    className="grid"
                     style={{
-                      gridTemplateColumns: 'repeat(52, minmax(10px, 1fr))',
-                      gridTemplateRows: `repeat(${state.userData.endAge}, minmax(10px, 1fr))`
+                      gridTemplateColumns: 'repeat(52, var(--week-size))',
+                      gridAutoRows: 'var(--week-size)',
+                      gap: 'var(--week-gap)',
                     }}
                   >
                     {weekData.map(week => (
                       <WeekBox
                         key={week.weekNumber}
                         weekData={week}
-                        birthDate={state.userData!.birthDate}
+                        birthDate={userData.birthDate}
                       />
                     ))}
                   </div>
@@ -161,41 +166,27 @@ export default function LifeGrid() {
               </div>
 
               {/* Quote */}
-              {state.userData.quote && (
-                <div className="quote text-center mt-8 pt-8 border-t border-gray-200">
-                  <blockquote className="text-lg italic text-gray-700">
-                    &ldquo;{state.userData.quote}&rdquo;
+              {userData.quote && (
+                <div className="quote text-center mt-10 pt-8 border-t border-[var(--line)]">
+                  <blockquote className="font-display italic text-lg text-[var(--ink)]">
+                    &ldquo;{userData.quote}&rdquo;
                   </blockquote>
                 </div>
               )}
 
               {/* Statistics */}
-              <div className="mt-8 pt-8 border-t border-gray-200">
+              <div className="life-stats mt-10 pt-8 border-t border-[var(--line)]">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {weekData.filter(w => w.isPast).length}
+                  {stats.map(stat => (
+                    <div key={stat.label}>
+                      <div className="font-display text-3xl text-[var(--ink)]">
+                        {stat.value}
+                      </div>
+                      <div className="text-xs font-mono uppercase tracking-[0.14em] text-[var(--muted)] mt-1 print-show">
+                        {stat.label}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 print-show">Weeks lived</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {weekData.filter(w => !w.isPast && !w.isCurrent).length}
-                    </div>
-                    <div className="text-sm text-gray-600 print-show">Weeks remaining</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {Math.round((weekData.filter(w => w.isPast).length / weekData.length) * 100)}%
-                    </div>
-                    <div className="text-sm text-gray-600 print-show">Life completed</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-orange-600">
-                      {state.userData.events.length}
-                    </div>
-                    <div className="text-sm text-gray-600 print-show">Life events</div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -203,48 +194,51 @@ export default function LifeGrid() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 print-hide">
-            <div className="space-y-6">
-              {/* Print Controls */}
+            <div className="space-y-5">
               <PrintControls />
+              <DataControls />
 
-              {/* Recent Events */}
-              {state.userData.events.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-4">
+              {userData.events.length > 0 && (
+                <div className="bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Recent Events</h3>
+                    <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)]">
+                      Recent events
+                    </h3>
                     <button
                       onClick={goBackToEvents}
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
+                      title="Edit events"
                     >
-                      <FaEdit className="w-4 h-4" />
+                      <FaEdit className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="space-y-3">
-                {state.userData.events
-                  .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
-                  .slice(0, 5)
-                  .map(event => {
-                    const isSameDate = event.startDate.toDateString() === event.endDate.toDateString();
-                    return (
-                      <div key={event.id} className="flex items-center gap-3">
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: event.color }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {event.title}
+                    {userData.events
+                      .slice()
+                      .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+                      .slice(0, 5)
+                      .map(event => {
+                        const isSameDate =
+                          event.startDate.toDateString() === event.endDate.toDateString();
+                        return (
+                          <div key={event.id} className="flex items-center gap-3">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: event.color }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-[var(--ink)] truncate">
+                                {event.title}
+                              </div>
+                              <div className="text-xs text-[var(--muted)]">
+                                {isSameDate
+                                  ? event.startDate.toLocaleDateString()
+                                  : `${event.startDate.toLocaleDateString()} – ${event.endDate.toLocaleDateString()}`}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {isSameDate 
-                              ? event.startDate.toLocaleDateString()
-                              : `${event.startDate.toLocaleDateString()} - ${event.endDate.toLocaleDateString()}`
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
                   </div>
                 </div>
               )}

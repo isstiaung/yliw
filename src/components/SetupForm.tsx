@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { UserData } from '@/types';
+import { parseLocalDate } from '@/utils/dateCalculations';
 
 export default function SetupForm() {
   const { setUserData, setPhase } = useLifeData();
@@ -40,7 +41,7 @@ export default function SetupForm() {
     if (!formData.birthDate) {
       newErrors.birthDate = 'Birth date is required';
     } else {
-      const birthDate = new Date(formData.birthDate);
+      const birthDate = parseLocalDate(formData.birthDate);
       const today = new Date();
       if (birthDate > today) {
         newErrors.birthDate = 'Birth date cannot be in the future';
@@ -64,7 +65,7 @@ export default function SetupForm() {
 
     const userData: UserData = {
       name: formData.name.trim(),
-      birthDate: new Date(formData.birthDate),
+      birthDate: parseLocalDate(formData.birthDate),
       endAge: formData.endAge,
       quote: formData.quote.trim(),
       events: []
@@ -74,18 +75,30 @@ export default function SetupForm() {
     setPhase('events');
   };
 
+  const inputClass = (hasError: boolean) =>
+    `w-full px-4 py-3 bg-[var(--surface)] border rounded-md text-[var(--ink)] placeholder:text-[var(--muted)]/60 outline-none transition-shadow focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] ${
+      hasError ? 'border-[var(--accent)]' : 'border-[var(--line)]'
+    }`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Life In Weeks</h1>
-          <p className="text-gray-600">Let&apos;s start by setting up your life calendar</p>
+    <div className="min-h-screen bg-[var(--paper)] paper-grain flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_12px_40px_-12px_rgba(31,27,22,0.18)] p-8 sm:p-10">
+        <div className="mb-9">
+          <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
+            Memento mori
+          </p>
+          <h1 className="font-display text-4xl text-[var(--ink)] leading-tight mb-2">
+            Your Life<br />in Weeks
+          </h1>
+          <p className="text-[var(--muted)]">
+            One small square for every week you will live. Let&apos;s set up your calendar.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Your Name
+            <label htmlFor="name" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+              Your name
             </label>
             <input
               type="text"
@@ -93,17 +106,15 @@ export default function SetupForm() {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={inputClass(!!errors.name)}
               placeholder="Enter your full name"
             />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-sm text-[var(--accent)]">{errors.name}</p>}
           </div>
 
           <div>
-            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
-              Birth Date
+            <label htmlFor="birthDate" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+              Birth date
             </label>
             <input
               type="date"
@@ -111,16 +122,14 @@ export default function SetupForm() {
               name="birthDate"
               value={formData.birthDate}
               onChange={handleInputChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                errors.birthDate ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={inputClass(!!errors.birthDate)}
             />
-            {errors.birthDate && <p className="mt-1 text-sm text-red-600">{errors.birthDate}</p>}
+            {errors.birthDate && <p className="mt-1 text-sm text-[var(--accent)]">{errors.birthDate}</p>}
           </div>
 
           <div>
-            <label htmlFor="endAge" className="block text-sm font-medium text-gray-700 mb-2">
-              End Age (20-90)
+            <label htmlFor="endAge" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+              Life expectancy <span className="text-[var(--muted)] font-normal">(20–90)</span>
             </label>
             <input
               type="number"
@@ -130,19 +139,17 @@ export default function SetupForm() {
               max="90"
               value={formData.endAge}
               onChange={handleInputChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900 ${
-                errors.endAge ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={inputClass(!!errors.endAge)}
             />
-            {errors.endAge && <p className="mt-1 text-sm text-red-600">{errors.endAge}</p>}
-            <p className="mt-1 text-sm text-gray-500">
-              This determines how many years your calendar will show
+            {errors.endAge && <p className="mt-1 text-sm text-[var(--accent)]">{errors.endAge}</p>}
+            <p className="mt-1.5 text-sm text-[var(--muted)]">
+              Determines how many years your calendar spans.
             </p>
           </div>
 
           <div>
-            <label htmlFor="quote" className="block text-sm font-medium text-gray-700 mb-2">
-              Personal Quote (Optional)
+            <label htmlFor="quote" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+              Personal quote <span className="text-[var(--muted)] font-normal">(optional)</span>
             </label>
             <textarea
               id="quote"
@@ -150,24 +157,22 @@ export default function SetupForm() {
               value={formData.quote}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none text-gray-900"
-              placeholder="A meaningful quote or motto for your life calendar"
+              className={`${inputClass(false)} resize-none`}
+              placeholder="A motto to anchor your calendar"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            className="w-full bg-[var(--ink)] text-[var(--paper)] py-3 px-4 rounded-md font-medium tracking-wide hover:bg-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--surface)] transition-colors"
           >
-            Continue to Add Events
+            Continue to add events
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Your data is stored locally in your browser and never sent to any server
-          </p>
-        </div>
+        <p className="mt-6 text-xs text-[var(--muted)] text-center">
+          Stored locally in your browser — never sent to any server.
+        </p>
       </div>
     </div>
   );
