@@ -44,7 +44,7 @@ export default function DataControls({ className = '' }: { className?: string })
   };
 
   return (
-    <div className={`bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
+    <div className={`card bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
       <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
         Your data
       </h3>

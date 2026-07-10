@@ -31,7 +31,7 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
   };
 
   return (
-    <div className={`bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
+    <div className={`card bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
       <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
         Print
       </h3>
@@ -74,6 +74,7 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
           <li>Set paper to {selectedSize}, portrait, margins “Default”.</li>
           <li>Choose “Save as PDF” to export a file.</li>
           <li>A4 and A3 suit most home printers; A0–A2 are poster sizes.</li>
+          <li>The poster prints in your current theme — pick a light one to save ink.</li>
         </ul>
       </div>
     </div>

@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import { differenceInWeeks } from 'date-fns';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { UserData } from '@/types';
 import { parseLocalDate } from '@/utils/dateCalculations';
+import WeekStrip from './WeekStrip';
 
 export default function SetupForm() {
   const { setUserData, setPhase } = useLifeData();
   const [formData, setFormData] = useState({
     name: '',
     birthDate: '',
-    endAge: 90,
+    endAge: '90',
     quote: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -19,7 +21,7 @@ export default function SetupForm() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'endAge' ? parseInt(value) || 90 : value
+      [name]: value
     }));
     
     // Clear error when user starts typing
@@ -48,7 +50,8 @@ export default function SetupForm() {
       }
     }
 
-    if (formData.endAge < 20 || formData.endAge > 90) {
+    const endAge = parseInt(formData.endAge, 10);
+    if (Number.isNaN(endAge) || endAge < 20 || endAge > 90) {
       newErrors.endAge = 'End age must be between 20 and 90';
     }
 
@@ -66,7 +69,7 @@ export default function SetupForm() {
     const userData: UserData = {
       name: formData.name.trim(),
       birthDate: parseLocalDate(formData.birthDate),
-      endAge: formData.endAge,
+      endAge: parseInt(formData.endAge, 10),
       quote: formData.quote.trim(),
       events: []
     };
@@ -80,10 +83,23 @@ export default function SetupForm() {
       hasError ? 'border-[var(--accent)]' : 'border-[var(--line)]'
     }`;
 
+  // Live preview: as soon as we know the birth date, the strip shows
+  // where "now" falls in a whole life — the poster in miniature.
+  const previewEndAge = parseInt(formData.endAge, 10);
+  const totalWeeks = (Number.isNaN(previewEndAge) ? 90 : previewEndAge) * 52;
+  let weeksLived: number | null = null;
+  if (formData.birthDate) {
+    const birthDate = parseLocalDate(formData.birthDate);
+    if (!Number.isNaN(birthDate.getTime()) && birthDate <= new Date()) {
+      weeksLived = Math.min(Math.max(differenceInWeeks(new Date(), birthDate), 0), totalWeeks);
+    }
+  }
+  const lifeFraction = weeksLived === null ? 0 : weeksLived / totalWeeks;
+
   return (
     <div className="min-h-screen bg-[var(--paper)] paper-grain flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_12px_40px_-12px_rgba(31,27,22,0.18)] p-8 sm:p-10">
-        <div className="mb-9">
+      <div className="card rise-in w-full max-w-md bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-8 sm:p-10">
+        <div className="mb-8">
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
             Memento mori
           </p>
@@ -93,6 +109,14 @@ export default function SetupForm() {
           <p className="text-[var(--muted)]">
             One small square for every week you will live. Let&apos;s set up your calendar.
           </p>
+          <div className="mt-6">
+            <WeekStrip fraction={lifeFraction} />
+            <p className="mt-2.5 text-xs font-mono text-[var(--muted)]">
+              {weeksLived === null
+                ? 'Your whole life in one row — enter your birth date to see where you are.'
+                : `You are here: ${weeksLived.toLocaleString()} weeks lived, ${(totalWeeks - weeksLived).toLocaleString()} to go.`}
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -166,7 +190,7 @@ export default function SetupForm() {
             type="submit"
             className="w-full bg-[var(--ink)] text-[var(--paper)] py-3 px-4 rounded-md font-medium tracking-wide hover:bg-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--surface)] transition-colors"
           >
-            Continue to add events
+            Continue to milestones
           </button>
         </form>
 

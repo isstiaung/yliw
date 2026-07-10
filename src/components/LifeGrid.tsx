@@ -1,28 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import PrintControls from './PrintControls';
 import DataControls from './DataControls';
+import ThemeControls from './ThemeControls';
 import { FaArrowLeft, FaEdit, FaRedo } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function LifeGrid() {
   const { state, clearData } = useLifeData();
   const router = useRouter();
-  if (!state.userData) {
+  const userData = state.userData;
+
+  // Up to ~4,700 cells — only regenerate when the underlying data changes
+  const weekData = useMemo(
+    () =>
+      userData
+        ? generateWeekData(userData.birthDate, userData.endAge, userData.events)
+        : [],
+    [userData]
+  );
+
+  if (!userData) {
     return null;
   }
-
-  const { userData } = state;
-
-  const weekData = generateWeekData(
-    userData.birthDate,
-    userData.endAge,
-    userData.events
-  );
 
   const goBackToEvents = () => router.push('/');
 
@@ -59,7 +63,7 @@ export default function LifeGrid() {
                 className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
               >
                 <FaArrowLeft className="w-3.5 h-3.5" />
-                Events
+                Milestones
               </button>
               <div className="h-5 w-px bg-[var(--line)]" />
               <button
@@ -71,7 +75,7 @@ export default function LifeGrid() {
               </button>
             </div>
             <div className="text-xs font-mono text-[var(--muted)]">
-              {userData.events.length} events · {weekData.length} weeks
+              {userData.events.length} milestone{userData.events.length === 1 ? '' : 's'} · {weekData.length.toLocaleString()} weeks
             </div>
           </div>
         </div>
@@ -81,7 +85,7 @@ export default function LifeGrid() {
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Main Calendar */}
           <div className="lg:col-span-3">
-            <div className="life-calendar-container bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_16px_50px_-20px_rgba(31,27,22,0.2)] p-6 sm:p-10">
+            <div className="life-calendar-container card rise-in bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-6 sm:p-10">
               {/* Title */}
               <div className="calendar-head text-center mb-8">
                 <p className="text-xs font-mono uppercase tracking-[0.22em] text-[var(--accent)] mb-3">
@@ -98,15 +102,15 @@ export default function LifeGrid() {
               {/* Legend */}
               <div className="legend flex flex-wrap justify-center gap-x-6 gap-y-2 mb-8 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-[2px]" style={{ background: '#e8e1d0', border: '1px solid #d8cfba' }} />
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: 'var(--week-future)', border: '1px solid var(--week-future-border)' }} />
                   <span className="text-[var(--muted)]">Future</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-[2px]" style={{ background: '#2a241d' }} />
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: 'var(--week-past)' }} />
                   <span className="text-[var(--muted)]">Lived</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-[2px]" style={{ background: 'var(--accent)' }} />
+                  <span className="w-3 h-3 rounded-[2px]" style={{ background: 'var(--week-current)' }} />
                   <span className="text-[var(--muted)]">This week</span>
                 </div>
                 {userData.events.map(event => (
@@ -155,11 +159,7 @@ export default function LifeGrid() {
                     }}
                   >
                     {weekData.map(week => (
-                      <WeekBox
-                        key={week.weekNumber}
-                        weekData={week}
-                        birthDate={userData.birthDate}
-                      />
+                      <WeekBox key={week.weekNumber} weekData={week} />
                     ))}
                   </div>
                 </div>
@@ -176,6 +176,23 @@ export default function LifeGrid() {
 
               {/* Statistics */}
               <div className="life-stats mt-10 pt-8 border-t border-[var(--line)]">
+                {/* Life progress — screen only, the printed poster stays clean */}
+                <div className="print-hide mb-6">
+                  <div
+                    className="h-1.5 rounded-full overflow-hidden"
+                    style={{ background: 'var(--week-future)' }}
+                    role="progressbar"
+                    aria-valuenow={pctLived}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Share of life lived"
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${pctLived}%`, background: 'var(--week-past)' }}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                   {stats.map(stat => (
                     <div key={stat.label}>
@@ -195,19 +212,20 @@ export default function LifeGrid() {
           {/* Sidebar */}
           <div className="lg:col-span-1 print-hide">
             <div className="space-y-5">
+              <ThemeControls />
               <PrintControls />
               <DataControls />
 
               {userData.events.length > 0 && (
-                <div className="bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5">
+                <div className="card bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)]">
-                      Recent events
+                      Recent milestones
                     </h3>
                     <button
                       onClick={goBackToEvents}
                       className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
-                      title="Edit events"
+                      title="Edit milestones"
                     >
                       <FaEdit className="w-3.5 h-3.5" />
                     </button>

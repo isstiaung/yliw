@@ -1,27 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { LifeEvent } from '@/types';
 import { mapDateRangeToWeeks, parseLocalDate, formatDateForInput } from '@/utils/dateCalculations';
+import { eventColors } from '@/utils/eventColors';
+import { CSV_TEMPLATE, parseEventsCsv } from '@/utils/csv';
 import IconPicker, { getIconComponent } from './IconPicker';
-import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaFileCsv, FaUpload } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
-
-const eventColors = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#eab308', // yellow
-  '#22c55e', // green
-  '#06b6d4', // cyan
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#6366f1', // indigo
-  '#84cc16'  // lime
-];
 
 interface EventFormData {
   title: string;
@@ -34,6 +21,8 @@ interface EventFormData {
 export default function EventForm() {
   const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
   const router = useRouter();
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const [csvMessage, setCsvMessage] = useState<{ text: string; errors: string[] } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>({
@@ -83,18 +72,11 @@ export default function EventForm() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      // Auto-fill end date to match start date while end date is empty
+      ...(name === 'startDate' && !prev.endDate ? { endDate: value } : {}),
     }));
-    
-    // Auto-set end date to start date if end date is empty
-    if (name === 'startDate' && !formData.endDate) {
-      setFormData(prev => ({
-        ...prev,
-        startDate: value,
-        endDate: value
-      }));
-    }
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -107,7 +89,7 @@ export default function EventForm() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Event title is required';
+      newErrors.title = 'Title is required';
     }
 
     if (!formData.startDate) {
@@ -182,9 +164,40 @@ export default function EventForm() {
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
+    if (window.confirm('Delete this milestone?')) {
       deleteEvent(eventId);
     }
+  };
+
+  const handleDownloadTemplate = () => {
+    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'milestones-template.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !state.userData) return;
+
+    const { birthDate, endAge } = state.userData;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const { events, errors } = parseEventsCsv(String(reader.result), birthDate, endAge);
+      events.forEach(event => addEvent(event));
+      setCsvMessage({
+        text:
+          events.length > 0
+            ? `Imported ${events.length} milestone${events.length === 1 ? '' : 's'}.`
+            : 'Nothing imported.',
+        errors,
+      });
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const proceedToCalendar = () => {
@@ -205,7 +218,7 @@ export default function EventForm() {
   return (
     <div className="min-h-screen bg-[var(--paper)] paper-grain p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[0_1px_2px_rgba(31,27,22,0.04),0_12px_40px_-16px_rgba(31,27,22,0.16)] p-8 sm:p-10">
+        <div className="card rise-in bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-8 sm:p-10">
           <div className="mb-8">
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
               Step two
@@ -218,13 +231,13 @@ export default function EventForm() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-8">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
             <button
               onClick={openAddForm}
               className="bg-[var(--ink)] text-[var(--paper)] px-5 py-2.5 rounded-md font-medium hover:bg-[var(--accent)] transition-colors flex items-center gap-2"
             >
               <FaPlus className="w-3.5 h-3.5" />
-              Add event
+              Add milestone
             </button>
             <button
               onClick={proceedToCalendar}
@@ -233,12 +246,57 @@ export default function EventForm() {
               <FaEye className="w-3.5 h-3.5" />
               View life calendar
             </button>
+            <div className="h-5 w-px bg-[var(--line)] hidden sm:block" />
+            <button
+              onClick={handleDownloadTemplate}
+              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
+              title="Download a CSV template to fill in"
+            >
+              <FaFileCsv className="w-3.5 h-3.5" />
+              CSV template
+            </button>
+            <button
+              onClick={() => csvInputRef.current?.click()}
+              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
+              title="Upload a filled-in CSV of milestones"
+            >
+              <FaUpload className="w-3.5 h-3.5" />
+              Upload CSV
+            </button>
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept="text/csv,.csv"
+              onChange={handleCsvUpload}
+              className="hidden"
+            />
           </div>
+          <p className="text-xs text-[var(--muted)]/70 mb-8">
+            Lots of milestones? Download the CSV template, fill it in, and upload it — no need to use the form.
+          </p>
+
+          {csvMessage && (
+            <div className="mb-8 rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4 text-sm">
+              <p className="text-[var(--ink)] font-medium">{csvMessage.text}</p>
+              {csvMessage.errors.length > 0 && (
+                <ul className="mt-2 space-y-0.5 text-[var(--accent)]">
+                  {csvMessage.errors.slice(0, 5).map(error => (
+                    <li key={error}>{error}</li>
+                  ))}
+                  {csvMessage.errors.length > 5 && (
+                    <li className="text-[var(--muted)]">
+                      …and {csvMessage.errors.length - 5} more rows skipped.
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          )}
 
           {state.userData.events.length > 0 ? (
             <div>
               <h2 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
-                {state.userData.events.length} event{state.userData.events.length === 1 ? '' : 's'}
+                {state.userData.events.length} milestone{state.userData.events.length === 1 ? '' : 's'}
               </h2>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {state.userData.events
@@ -298,8 +356,16 @@ export default function EventForm() {
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-[var(--line)] rounded-lg py-12 text-center">
-              <p className="text-[var(--muted)]">No events yet — add your first milestone above.</p>
+            <div className="border border-dashed border-[var(--line)] rounded-lg py-14 px-6 text-center">
+              <div className="mx-auto mb-4 flex w-fit gap-1.5" aria-hidden="true">
+                {eventColors.slice(0, 5).map(color => (
+                  <span key={color} className="h-3 w-3 rounded-[2px]" style={{ background: color }} />
+                ))}
+              </div>
+              <p className="font-medium text-[var(--ink)] mb-1">No milestones yet</p>
+              <p className="text-sm text-[var(--muted)]">
+                Add the chapters that shaped your weeks — school, moves, people, adventures.
+              </p>
             </div>
           )}
         </div>
@@ -308,17 +374,17 @@ export default function EventForm() {
       {/* Event Form Modal */}
       {isFormOpen && (
         <div
-          className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          className="modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           onClick={closeForm}
         >
           <div
-            className="bg-[var(--surface)] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="modal-panel card bg-[var(--surface)] rounded-xl shadow-[var(--shadow-card-lg)] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display text-2xl text-[var(--ink)]">
-                  {editingEvent ? 'Edit event' : 'New event'}
+                  {editingEvent ? 'Edit milestone' : 'New milestone'}
                 </h2>
                 <button
                   onClick={closeForm}
@@ -332,7 +398,7 @@ export default function EventForm() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-[var(--ink)] mb-1.5">
-                    Event title
+                    Title
                   </label>
                   <input
                     type="text"
@@ -450,7 +516,7 @@ export default function EventForm() {
                     type="submit"
                     className="flex-1 bg-[var(--ink)] text-[var(--paper)] px-4 py-3 rounded-md font-medium hover:bg-[var(--accent)] transition-colors"
                   >
-                    {editingEvent ? 'Update event' : 'Add event'}
+                    {editingEvent ? 'Save milestone' : 'Add milestone'}
                   </button>
                 </div>
               </form>

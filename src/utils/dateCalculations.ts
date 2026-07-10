@@ -81,13 +81,7 @@ export function mapDateRangeToWeeks(birthDate: Date, startDate: Date, endDate: D
   };
 }
 
+/** Age in completed years during a given week: weeks 1–52 are age 0, 53–104 age 1, … */
 export function getAgeFromWeek(weekNumber: number): number {
-  return Math.ceil(weekNumber / 52);
-}
-
-export function formatWeekInfo(weekData: WeekData, birthDate: Date): string {
-  const weekDate = getWeekDate(birthDate, weekData.weekNumber);
-  const age = getAgeFromWeek(weekData.weekNumber);
-  
-  return `Week ${weekData.weekNumber} - Age ${age}, Year ${weekData.year}, Week ${weekData.weekInYear} of year (${weekDate.toLocaleDateString()})`;
+  return Math.floor((weekNumber - 1) / 52);
 }

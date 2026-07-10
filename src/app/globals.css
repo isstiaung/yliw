@@ -1,25 +1,144 @@
 @import "tailwindcss";
 
 :root {
-  /* Editorial "memento mori" palette — warm paper & ink, one restrained accent */
-  --paper: #f7f4ec;
-  --surface: #fffdf7;
-  --ink: #1f1b16;
-  --muted: #7a7065;
-  --line: #e4ddcd;
-  --accent: #b4471f;
-  --accent-soft: #f0e3d8;
+  /* Editorial "memento mori" palette — sunlit paper & warm ink, one ember accent */
+  --paper: #f7f0e1;
+  --surface: #fffcf4;
+  --ink: #211a12;
+  --muted: #83705c;
+  --line: #e6dbc4;
+  --accent: #b5501d;
+  --accent-soft: #f5e5d2;
 
   /* Week states */
-  --week-future: #e8e1d0;
-  --week-future-border: #d8cfba;
-  --week-past: #2a241d;
-  --week-past-border: #2a241d;
+  --week-future: #eadfc6;
+  --week-future-border: #dcceae;
+  --week-past: #2c2317;
+  --week-past-border: #2c231f;
   --week-current: var(--accent);
   --week-current-border: #8f3315;
 
+  /* Warm shadows — brown, not black, so depth reads as light on paper */
+  --shadow-card: 0 1px 2px rgba(92, 61, 26, 0.05), 0 12px 40px -12px rgba(92, 61, 26, 0.22);
+  --shadow-card-lg: 0 1px 2px rgba(92, 61, 26, 0.05), 0 24px 60px -24px rgba(92, 61, 26, 0.28);
+
+  /* Event title colour inside the week tooltip (tooltip bg is --ink) */
+  --tooltip-event: #e8a87f;
+
   --background: var(--paper);
   --foreground: var(--ink);
+}
+
+/* ——— Themes ———
+   Every component reads colours only through these variables, so a theme
+   is just a different variable set. Preview swatches for the picker live
+   in src/utils/themes.ts; keep the two in sync. */
+
+[data-theme='light'] {
+  --paper: #fafaf8;
+  --surface: #ffffff;
+  --ink: #1c1c1a;
+  --muted: #6f6f68;
+  --line: #e6e4dc;
+  --accent: #c03a2b;
+  --accent-soft: #f7e5e1;
+
+  --week-future: #eeedea;
+  --week-future-border: #dddbd4;
+  --week-past: #23231f;
+  --week-past-border: #23231f;
+  --week-current: var(--accent);
+  --week-current-border: #8f2419;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px -12px rgba(0, 0, 0, 0.12);
+  --shadow-card-lg: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 60px -24px rgba(0, 0, 0, 0.16);
+  --tooltip-event: #e89a8a;
+}
+
+[data-theme='light'] .paper-grain {
+  background-image: radial-gradient(circle at 1px 1px, rgba(30, 30, 28, 0.03) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+[data-theme='dark'] {
+  --paper: #16120e;
+  --surface: #211b14;
+  --ink: #ede4d3;
+  --muted: #9c8d78;
+  --line: #362d22;
+  --accent: #d97038;
+  --accent-soft: #3a2a1a;
+
+  /* Inverted grid: on dark paper the lived weeks are the light ones */
+  --week-future: #2c251c;
+  --week-future-border: #3a3126;
+  --week-past: #e7dcc3;
+  --week-past-border: #e7dcc3;
+  --week-current: var(--accent);
+  --week-current-border: #a34a1c;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 40px -12px rgba(0, 0, 0, 0.6);
+  --shadow-card-lg: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  --tooltip-event: #a34a1c;
+}
+
+[data-theme='dark'] .paper-grain {
+  background-image:
+    radial-gradient(1100px 500px at 50% -120px, rgba(255, 178, 92, 0.06), transparent 70%),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
+  background-size: 100% 100%, 22px 22px;
+}
+
+[data-theme='sketch'] {
+  --paper: #fdfcf6;
+  --surface: #ffffff;
+  --ink: #34342f; /* graphite */
+  --muted: #8b8b82;
+  --line: #d8d6c9;
+  --accent: #c94f2e; /* red pen */
+  --accent-soft: #f9e6de;
+
+  --week-future: #f1efe4;
+  --week-future-border: #c9c7ba;
+  --week-past: #4a4a43;
+  --week-past-border: #4a4a43;
+  --week-current: var(--accent);
+  --week-current-border: #a03a1e;
+
+  /* Flat offset shadow, like a card laid on the desk */
+  --shadow-card: 3px 3px 0 rgba(52, 52, 47, 0.12);
+  --shadow-card-lg: 4px 4px 0 rgba(52, 52, 47, 0.16);
+  --tooltip-event: #f0a58a;
+}
+
+/* Sketchbook: faint graph paper instead of grain */
+[data-theme='sketch'] .paper-grain {
+  background-image:
+    linear-gradient(rgba(100, 118, 148, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 118, 148, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+[data-theme='sketch'] .font-display {
+  font-family: var(--font-caveat), 'Bradley Hand', 'Segoe Print', cursive;
+  letter-spacing: 0;
+}
+
+/* Hand-drawn outline: uneven radii + a firm pen border */
+[data-theme='sketch'] .card {
+  border: 1.5px solid rgba(52, 52, 47, 0.55);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+/* A slight tilt every few squares so the grid feels scribbled */
+[data-theme='sketch'] .week-box:nth-child(3n) {
+  transform: rotate(1.6deg);
+}
+[data-theme='sketch'] .week-box:nth-child(5n) {
+  transform: rotate(-1.8deg);
+}
+[data-theme='sketch'] .week-box:nth-child(7n) {
+  transform: rotate(2.2deg);
 }
 
 @theme inline {
@@ -48,10 +167,87 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* Subtle paper grain so large empty areas don't feel flat */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Paper texture: a soft amber glow from the top (afternoon light) over a
+   subtle grain so large empty areas don't feel flat */
 .paper-grain {
-  background-image: radial-gradient(circle at 1px 1px, rgba(31, 27, 22, 0.035) 1px, transparent 0);
-  background-size: 22px 22px;
+  background-image:
+    radial-gradient(1100px 500px at 50% -120px, rgba(214, 156, 68, 0.12), transparent 70%),
+    radial-gradient(circle at 1px 1px, rgba(72, 50, 25, 0.045) 1px, transparent 0);
+  background-size: 100% 100%, 22px 22px;
+}
+
+/* Entrances — one quiet rise for cards, a fade-scale for the modal */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise-in {
+  animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  animation: fade-in 0.2s ease-out both;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.modal-panel {
+  animation: modal-in 0.25s ease-out both;
+}
+
+/* Loader: a short row of week squares taking turns as "this week" */
+@keyframes week-pulse {
+  0%,
+  60%,
+  100% {
+    background: var(--week-future);
+  }
+  30% {
+    background: var(--accent);
+  }
+}
+
+.loader-week {
+  animation: week-pulse 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .modal-overlay,
+  .modal-panel,
+  .loader-week {
+    animation: none;
+  }
 }
 
 /* Print styles for color preservation */

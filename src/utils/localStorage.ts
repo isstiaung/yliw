@@ -1,4 +1,5 @@
-import { UserData } from '@/types';
+import { UserData, LifeEvent } from '@/types';
+import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
 
 const STORAGE_KEY = 'yliw-user-data';
 
@@ -43,16 +44,7 @@ export function loadUserData(): UserData | null {
     const serializedData = localStorage.getItem(STORAGE_KEY);
     if (!serializedData) return null;
 
-    const data: SerializedUserData = JSON.parse(serializedData);
-    return {
-      ...data,
-      birthDate: new Date(data.birthDate),
-      events: data.events.map((event: SerializedEvent) => ({
-        ...event,
-        startDate: new Date(event.startDate),
-        endDate: new Date(event.endDate)
-      }))
-    };
+    return deserializeUserData(JSON.parse(serializedData));
   } catch (error) {
     console.error('Failed to load user data:', error);
     return null;
@@ -70,26 +62,76 @@ export function clearUserData(): void {
 export function exportUserData(): string {
   const userData = loadUserData();
   if (!userData) return '';
-  
+
   return JSON.stringify(userData, null, 2);
 }
 
 export function importUserData(jsonString: string): UserData | null {
   try {
-    const data: SerializedUserData = JSON.parse(jsonString);
-    const userData: UserData = {
-      ...data,
-      birthDate: new Date(data.birthDate),
-      events: data.events.map((event: SerializedEvent) => ({
-        ...event,
-        startDate: new Date(event.startDate),
-        endDate: new Date(event.endDate)
-      }))
-    };
+    const userData = deserializeUserData(JSON.parse(jsonString));
+    if (!userData) return null;
     saveUserData(userData);
     return userData;
   } catch (error) {
     console.error('Failed to import user data:', error);
     return null;
   }
+}
+
+function isValidDate(date: Date): boolean {
+  return !Number.isNaN(date.getTime());
+}
+
+/**
+ * Validate and revive parsed JSON into UserData. Imported files may be
+ * hand-edited or from an older version, so nothing is trusted: dates are
+ * checked, missing ids regenerated, and week numbers recomputed from the
+ * dates rather than read from the file.
+ */
+function deserializeUserData(data: unknown): UserData | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const raw = data as Partial<SerializedUserData>;
+
+  if (typeof raw.name !== 'string' || !raw.name.trim()) return null;
+  if (typeof raw.birthDate !== 'string') return null;
+  if (typeof raw.endAge !== 'number' || raw.endAge < 1 || raw.endAge > 120) return null;
+
+  const birthDate = new Date(raw.birthDate);
+  if (!isValidDate(birthDate)) return null;
+
+  const rawEvents = Array.isArray(raw.events) ? raw.events : [];
+  const events: LifeEvent[] = [];
+
+  for (const rawEvent of rawEvents) {
+    if (typeof rawEvent !== 'object' || rawEvent === null) return null;
+    const e = rawEvent as Partial<SerializedEvent>;
+    if (typeof e.title !== 'string' || typeof e.startDate !== 'string' || typeof e.endDate !== 'string') {
+      return null;
+    }
+
+    const startDate = new Date(e.startDate);
+    const endDate = new Date(e.endDate);
+    if (!isValidDate(startDate) || !isValidDate(endDate)) return null;
+
+    const weekRange = mapDateRangeToWeeks(birthDate, startDate, endDate);
+
+    events.push({
+      id: typeof e.id === 'string' && e.id ? e.id : crypto.randomUUID(),
+      title: e.title,
+      startDate,
+      endDate,
+      color: typeof e.color === 'string' ? e.color : '#b4471f',
+      icon: typeof e.icon === 'string' ? e.icon : 'Star',
+      startWeekNumber: weekRange.startWeek,
+      endWeekNumber: weekRange.endWeek,
+    });
+  }
+
+  return {
+    name: raw.name,
+    birthDate,
+    endAge: raw.endAge,
+    quote: typeof raw.quote === 'string' ? raw.quote : '',
+    events,
+  };
 }

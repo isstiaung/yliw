@@ -3,44 +3,39 @@
 import React from 'react';
 import { WeekData } from '@/types';
 import { getIconComponent } from './IconPicker';
-import { formatWeekInfo } from '@/utils/dateCalculations';
+import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
   weekData: WeekData;
-  birthDate: Date;
   className?: string;
 }
 
-export default function WeekBox({ weekData, birthDate, className = '' }: WeekBoxProps) {
+function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   const { isPast, isCurrent, event } = weekData;
-  
+
   // Default: a future, unlived week
-  let backgroundColor = '#e8e1d0';
-  let borderColor = '#d8cfba';
+  let backgroundColor = 'var(--week-future)';
+  let borderColor = 'var(--week-future-border)';
 
   if (isPast) {
-    backgroundColor = '#2a241d'; // Ink — weeks already lived
-    borderColor = '#2a241d';
+    backgroundColor = 'var(--week-past)';
+    borderColor = 'var(--week-past-border)';
   }
 
   if (isCurrent) {
-    backgroundColor = '#b4471f'; // Accent — the week you're in now
-    borderColor = '#8f3315';
+    backgroundColor = 'var(--week-current)';
+    borderColor = 'var(--week-current-border)';
   }
-  
+
   // Event colors override defaults
   if (event) {
     backgroundColor = event.color;
     borderColor = event.color;
   }
-  
+
+  const age = getAgeFromWeek(weekData.weekNumber);
   const IconComponent = event ? getIconComponent(event.icon) : null;
-  const tooltipText = formatWeekInfo(weekData, birthDate) + 
-    (event ? `\n${event.title}` + 
-      (event.startDate.toDateString() === event.endDate.toDateString() ? 
-        ` (${event.startDate.toLocaleDateString()})` :
-        ` (${event.startDate.toLocaleDateString()} - ${event.endDate.toLocaleDateString()})`
-      ) : '');
+  const label = `Week ${weekData.weekNumber}, age ${age}${event ? ` — ${event.title}` : ''}`;
 
   return (
     <div
@@ -53,12 +48,11 @@ export default function WeekBox({ weekData, birthDate, className = '' }: WeekBox
         width: 'var(--week-size, 10px)',
         height: 'var(--week-size, 10px)',
         border: '1px solid',
-        cursor: 'pointer',
         WebkitPrintColorAdjust: 'exact',
         printColorAdjust: 'exact',
-        colorAdjust: 'exact'
       } as React.CSSProperties}
-      title={tooltipText}
+      role="img"
+      aria-label={label}
     >
       {/* Icon for events — scales with the box so it never overflows */}
       {IconComponent && (
@@ -85,25 +79,27 @@ export default function WeekBox({ weekData, birthDate, className = '' }: WeekBox
           />
         </div>
       )}
-      
+
       {/* Hover tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-[var(--ink)] text-[var(--paper)] text-xs rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-[var(--ink)] text-[var(--paper)] text-xs rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
         <div className="text-center">
           <div className="font-medium">
             Week {weekData.weekNumber}
           </div>
           <div className="text-[var(--paper)]/60">
-            Age {Math.ceil(weekData.weekNumber / 52)}
+            Age {age}
           </div>
           {event && (
-            <div className="text-[var(--accent)] font-medium mt-1" style={{ color: '#e8a87f' }}>
+            <div className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>
               {event.title}
             </div>
           )}
         </div>
         {/* Tooltip arrow */}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
       </div>
     </div>
   );
 }
+
+export default React.memo(WeekBox);

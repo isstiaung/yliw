@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces, Caveat } from "next/font/google";
 import "./globals.css";
 import { LifeDataProvider } from "@/contexts/LifeDataContext";
+import { themeInitScript } from "@/utils/themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,12 @@ const fraunces = Fraunces({
   style: ["normal", "italic"],
 });
 
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Your Life In Weeks",
   description: "Visualize your life as a calendar of weeks with important events and milestones",
@@ -31,10 +38,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the theme script below sets data-theme on
+    // <html> before hydration, which React would otherwise flag as a mismatch.
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${caveat.variable} antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <LifeDataProvider>
           {children}
         </LifeDataProvider>
