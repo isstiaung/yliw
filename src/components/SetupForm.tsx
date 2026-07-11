@@ -6,6 +6,7 @@ import { useLifeData } from '@/contexts/LifeDataContext';
 import { UserData } from '@/types';
 import { parseLocalDate } from '@/utils/dateCalculations';
 import WeekStrip from './WeekStrip';
+import Logo from './Logo';
 
 export default function SetupForm() {
   const { setUserData, setPhase } = useLifeData();
@@ -100,6 +101,7 @@ export default function SetupForm() {
     <div className="min-h-screen bg-[var(--paper)] paper-grain flex items-center justify-center p-4">
       <div className="card rise-in w-full max-w-md bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-8 sm:p-10">
         <div className="mb-8">
+          <Logo className="h-9 w-9 mb-5" />
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
             Memento mori
           </p>

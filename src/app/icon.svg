@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Warm paper tile -->
+  <rect width="64" height="64" rx="14" fill="#f7f0e1"/>
+  <!-- Mini life grid: lived weeks in ink, "you are here" in ember, the rest unlived -->
+  <g>
+    <rect x="7.5"  y="7.5"  width="13" height="13" rx="2.5" fill="#211a12"/>
+    <rect x="25.5" y="7.5"  width="13" height="13" rx="2.5" fill="#211a12"/>
+    <rect x="43.5" y="7.5"  width="13" height="13" rx="2.5" fill="#211a12"/>
+    <rect x="7.5"  y="25.5" width="13" height="13" rx="2.5" fill="#211a12"/>
+    <rect x="25.5" y="25.5" width="13" height="13" rx="2.5" fill="#211a12"/>
+    <rect x="43.5" y="25.5" width="13" height="13" rx="2.5" fill="#b5501d"/>
+    <rect x="8.25" y="44.25" width="11.5" height="11.5" rx="2" fill="#eadfc6" stroke="#dcceae" stroke-width="1.5"/>
+    <rect x="26.25" y="44.25" width="11.5" height="11.5" rx="2" fill="#eadfc6" stroke="#dcceae" stroke-width="1.5"/>
+    <rect x="44.25" y="44.25" width="11.5" height="11.5" rx="2" fill="#eadfc6" stroke="#dcceae" stroke-width="1.5"/>
+  </g>
+</svg>

@@ -7,6 +7,7 @@ import WeekBox from './WeekBox';
 import PrintControls from './PrintControls';
 import DataControls from './DataControls';
 import ThemeControls from './ThemeControls';
+import Logo from './Logo';
 import { FaArrowLeft, FaEdit, FaRedo } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
@@ -58,6 +59,8 @@ export default function LifeGrid() {
         <div className="max-w-7xl mx-auto px-4 py-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <Logo className="h-5 w-5" />
+              <div className="h-5 w-px bg-[var(--line)]" />
               <button
                 onClick={goBackToEvents}
                 className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
