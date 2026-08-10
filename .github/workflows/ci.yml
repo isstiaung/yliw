@@ -1,10 +1,17 @@
 name: CI
 
+# `pull_request` is deliberately unfiltered: deploy-worker requires this check
+# before a merge, so a PR targeting it must be able to run CI. Filtering to
+# main would leave those PRs waiting forever on a check that never reports.
+#
+# `pull_request` (never `pull_request_target`) runs with a read-only token and
+# no repository secrets, so a fork PR cannot reach Cloudflare. Deploys are
+# triggered by Cloudflare's Git integration watching deploy-worker; nothing in
+# this workflow holds deploy credentials.
 on:
   push:
-    branches: [main]
+    branches: [main, deploy-worker]
   pull_request:
-    branches: [main]
 
 # Cancel superseded runs on the same branch/PR instead of queueing them.
 concurrency:
