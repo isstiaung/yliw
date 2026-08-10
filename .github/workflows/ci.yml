@@ -1,0 +1,54 @@
+name: CI
+
+# `pull_request` is deliberately unfiltered: deploy-worker requires this check
+# before a merge, so a PR targeting it must be able to run CI. Filtering to
+# main would leave those PRs waiting forever on a check that never reports.
+#
+# `pull_request` (never `pull_request_target`) runs with a read-only token and
+# no repository secrets, so a fork PR cannot reach Cloudflare. Deploys are
+# triggered by Cloudflare's Git integration watching deploy-worker; nothing in
+# this workflow holds deploy credentials.
+on:
+  push:
+    branches: [main, deploy-worker]
+  pull_request:
+
+# Cancel superseded runs on the same branch/PR instead of queueing them.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, typecheck, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload static export
+        uses: actions/upload-artifact@v7
+        with:
+          name: static-export
+          path: out/
+          retention-days: 7

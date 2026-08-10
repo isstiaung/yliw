@@ -1,0 +1,89 @@
+name: Bug report
+description: Something isn't working the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+
+        **Please don't paste real personal data.** Your calendar is private to
+        your browser and we never need the real thing to fix a parser — redact
+        names and dates in any file you attach.
+
+        Found a security issue? Please follow
+        [SECURITY.md](https://github.com/isstiaung/yliw/blob/main/SECURITY.md)
+        instead of filing a public issue.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app?
+      options:
+        - Setup form
+        - Adding or editing events
+        - CSV import
+        - JSON export / import
+        - The week grid
+        - Printing / PDF export
+        - Themes and colours
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: "Chrome 130 on macOS 15"
+    validations:
+      required: true
+
+  - type: input
+    id: paper-size
+    attributes:
+      label: Paper size
+      description: Only if this is a printing bug.
+      placeholder: "A3, portrait, background graphics on"
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Anything in the browser devtools console. Rendered as code, no backticks needed.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, a redacted sample file, or other context.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this hasn't been reported.
+          required: true
+        - label: I've removed any personal data from files and screenshots I'm attaching.
+          required: true
