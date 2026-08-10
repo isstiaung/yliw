@@ -24,11 +24,15 @@ branches, and fixes land on `main`.
 
 **Please do not open a public issue for a security report.**
 
-Use one of these instead:
+Report it privately through **GitHub Security Advisories**:
+<https://github.com/isstiaung/yliw/security/advisories/new>
 
-1. **GitHub Security Advisories** (preferred) — open a private report at
-   <https://github.com/isstiaung/yliw/security/advisories/new>.
-2. **Email** — <the maintainer>.
+That channel is private between you and the maintainer, it lets us discuss a
+fix before anything is public, and it can issue a CVE and credit you when the
+advisory is published. No email address is listed here deliberately — a public
+inbox in a public repo is a spam magnet, and the advisory flow is better for
+both of us. If you cannot use it for some reason, open a normal issue saying
+only that you have a security report and how to reach you, with no details.
 
 Please include:
 

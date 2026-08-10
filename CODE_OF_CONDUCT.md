@@ -59,8 +59,11 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-<the maintainer>.
+reported privately to the maintainer, [@isstiaung](https://github.com/isstiaung),
+through the contact details on that profile. If the report concerns something
+you would rather not raise in the open, you can also use the repository's
+[private reporting form](https://github.com/isstiaung/yliw/security/advisories/new),
+which is visible only to the maintainer.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
