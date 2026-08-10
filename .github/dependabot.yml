@@ -16,6 +16,13 @@ updates:
         dependency-type: development
       production-dependencies:
         dependency-type: production
+    ignore:
+      # eslint-config-next bundles typescript-eslint, which does not support
+      # the TS 7.0 API — a major bump here fails lint and blocks every other
+      # dev dependency in the group. Drop this once upstream ships support:
+      # https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -24,3 +31,7 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      # Otherwise every action bump is its own PR.
+      github-actions:
+        patterns: ["*"]
