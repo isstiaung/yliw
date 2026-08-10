@@ -89,6 +89,14 @@ Match what's already there rather than importing your own style:
 - Keep components in `src/components/`, pure logic in `src/utils/`, and shared
   types in `src/types/`.
 
+### Regenerating the README screenshots
+
+If your change alters the UI enough to make `docs/screenshots/` stale, rerun
+`scripts/screenshots.mjs` — the header comment has the setup steps. Playwright
+is intentionally not a project dependency, so it's a one-time install. The
+script seeds a fictional persona; please don't replace it with real data, since
+these images ship in a public repo.
+
 ### A note on the theme init script
 
 `src/utils/themes.ts` exports `themeInitScript`, an inline script that applies

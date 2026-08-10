@@ -21,6 +21,11 @@ mark the chapters that mattered, and print it at poster size for the wall.
 
 Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/life-weeks.html).
 
+<p align="center">
+  <img src="docs/screenshots/poster.png" width="620"
+       alt="A life calendar poster: 90 rows of 52 squares, the lived weeks filled in dark, coloured bands marking school, university, jobs, a wedding and a sabbatical, and the remaining decades left empty.">
+</p>
+
 ## Highlights
 
 - **Everything stays on your device.** No account, no server, no analytics, no
@@ -37,6 +42,33 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
   plus per-token colour overrides for background, ink, accent, and each of the
   three week states.
 - **Portable data.** Export and import the whole calendar as JSON.
+
+## Screens
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/setup.png" alt="The setup form asking for name, birth date, life expectancy and an optional quote.">
+      <p align="center"><em>Setup — four fields, stored only in your browser</em></p>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/events.png" alt="The milestones screen showing twelve event cards, each with an icon, colour, date range and the week numbers it spans.">
+      <p align="center"><em>Milestones — add by hand or upload a CSV</em></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/calendar.png" alt="The full calendar view with the grid on the left and panels for appearance, print size, data export and recent milestones on the right.">
+      <p align="center"><em>The calendar, with print and theme controls</em></p>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/poster-dark.png" alt="The same life calendar poster rendered in the dark theme, with cream squares on a near-black background.">
+      <p align="center"><em>The same poster in the dark theme</em></p>
+    </td>
+  </tr>
+</table>
+
+> Screenshots use a fictional persona — no real data here.
 
 ## Quick start
 
