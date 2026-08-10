@@ -1,12 +1,36 @@
 {
   "name": "yliw",
   "version": "0.1.0",
+  "description": "Your Life In Weeks — a printable, offline-first calendar of every week of your life.",
   "private": true,
+  "license": "MIT",
+  "author": "Sainath (@isstiaung)",
+  "homepage": "https://github.com/isstiaung/yliw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isstiaung/yliw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/isstiaung/yliw/issues"
+  },
+  "keywords": [
+    "life-in-weeks",
+    "life-calendar",
+    "nextjs",
+    "react",
+    "poster",
+    "printable",
+    "local-first"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
