@@ -1,0 +1,66 @@
+name: Feature request
+description: Suggest an idea for the project
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Worth knowing up front: this project is
+        deliberately local-first — no accounts, no servers, no analytics, no
+        runtime network calls — and it has to keep working as a static export.
+        Suggestions that fit inside those constraints have a much better chance.
+        See [CONTRIBUTING.md](https://github.com/isstiaung/yliw/blob/main/CONTRIBUTING.md#principles-worth-knowing).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that's hard or impossible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Describe the feature as concretely as you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Workarounds you've tried, or other designs you thought about.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app would this touch?
+      options:
+        - Setup and event entry
+        - Import / export formats
+        - The week grid
+        - Printing and paper sizes
+        - Themes, colours, icons
+        - Accessibility
+        - Developer experience
+        - Something else
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Fit with the project's constraints
+      options:
+        - label: This works without a backend, an account, or any network request.
+        - label: I'd be interested in implementing this myself.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this hasn't been suggested.
+          required: true
