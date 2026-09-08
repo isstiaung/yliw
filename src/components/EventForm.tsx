@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { LifeEvent } from '@/types';
 import { mapDateRangeToWeeks, parseLocalDate, formatDateForInput } from '@/utils/dateCalculations';
 import { eventColors } from '@/utils/eventColors';
-import { CSV_TEMPLATE, parseEventsCsv } from '@/utils/csv';
 import IconPicker from './IconPicker';
+import CsvImport from './CsvImport';
 import MilestoneIcon from './MilestoneIcon';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaFileCsv, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 interface EventFormData {
@@ -22,8 +22,6 @@ interface EventFormData {
 export default function EventForm() {
   const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
   const router = useRouter();
-  const csvInputRef = useRef<HTMLInputElement>(null);
-  const [csvMessage, setCsvMessage] = useState<{ text: string; errors: string[] } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>({
@@ -170,37 +168,6 @@ export default function EventForm() {
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'milestones-template.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !state.userData) return;
-
-    const { birthDate, endAge } = state.userData;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { events, errors } = parseEventsCsv(String(reader.result), birthDate, endAge);
-      events.forEach(event => addEvent(event));
-      setCsvMessage({
-        text:
-          events.length > 0
-            ? `Imported ${events.length} milestone${events.length === 1 ? '' : 's'}.`
-            : 'Nothing imported.',
-        errors,
-      });
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
   const proceedToCalendar = () => {
     router.push("/calendar");
   };
@@ -246,51 +213,8 @@ export default function EventForm() {
               View life calendar
             </button>
             <div className="h-5 w-px bg-[var(--line)] hidden sm:block" />
-            <button
-              onClick={handleDownloadTemplate}
-              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
-              title="Download a CSV template to fill in"
-            >
-              <FaFileCsv className="w-3.5 h-3.5" />
-              CSV template
-            </button>
-            <button
-              onClick={() => csvInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
-              title="Upload a filled-in CSV of milestones"
-            >
-              <FaUpload className="w-3.5 h-3.5" />
-              Upload CSV
-            </button>
-            <input
-              ref={csvInputRef}
-              type="file"
-              accept="text/csv,.csv"
-              onChange={handleCsvUpload}
-              className="hidden"
-            />
+            <CsvImport />
           </div>
-          <p className="text-xs text-[var(--muted)]/70 mb-8">
-            Lots of milestones? Download the CSV template, fill it in, and upload it — no need to use the form.
-          </p>
-
-          {csvMessage && (
-            <div className="mb-8 rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4 text-sm">
-              <p className="text-[var(--ink)] font-medium">{csvMessage.text}</p>
-              {csvMessage.errors.length > 0 && (
-                <ul className="mt-2 space-y-0.5 text-[var(--accent)]">
-                  {csvMessage.errors.slice(0, 5).map(error => (
-                    <li key={error}>{error}</li>
-                  ))}
-                  {csvMessage.errors.length > 5 && (
-                    <li className="text-[var(--muted)]">
-                      …and {csvMessage.errors.length - 5} more rows skipped.
-                    </li>
-                  )}
-                </ul>
-              )}
-            </div>
-          )}
 
           {state.userData.events.length > 0 ? (
             <div>
