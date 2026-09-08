@@ -1,5 +1,4 @@
 import { UserData, WeekData } from '@/types';
-import { getAgeFromWeek } from './dateCalculations';
 
 /**
  * Poster export.

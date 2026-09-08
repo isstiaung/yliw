@@ -41,6 +41,9 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
 - **Four themes, fully recolourable.** Warm, Light, Dark, and Sketch presets,
   plus per-token colour overrides for background, ink, accent, and each of the
   three week states.
+- **Keyboard navigable.** The grid is one tab stop; arrow keys walk the weeks,
+  `PageUp`/`PageDown` jump five years, `Ctrl`/`Cmd`+`Home`/`End` go to the
+  first and last week of life.
 - **Export as PNG or SVG.** Share it as an image, or hand a print shop a real
   vector that stays sharp at any size. Both use your current theme.
 - **Fits any screen.** The whole 90-year grid is visible on a phone — no
@@ -146,6 +149,7 @@ src/
 └── utils/                   # Pure logic; *.test.ts sits beside each module
     ├── dateCalculations.ts  # Birth-relative week maths
     ├── csv.ts               # CSV parse + per-row validation
+    ├── gridNavigation.ts    # Keyboard movement rules for the grid
     ├── icons.ts             # Milestone icon catalogue + name lookup
     ├── posterExport.ts      # Poster as SVG, and SVG rasterised to PNG
     ├── printStyles.ts       # Per-paper-size @media print rules
@@ -193,8 +197,8 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
 conventions, and what makes a PR easy to merge. Everyone taking part is
 expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Good places to start: more icons, additional theme presets, keyboard navigation
-for the grid, and further export formats such as ICS.
+Good places to start: more icons, additional theme presets, and further export
+formats such as ICS.
 
 To report a security issue, please follow [SECURITY.md](SECURITY.md) rather
 than opening a public issue.

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import WeekTooltip, { TooltipTarget } from './WeekTooltip';
+import { nextWeekForKey, WEEKS_PER_ROW } from '@/utils/gridNavigation';
 import PrintControls from './PrintControls';
 import ExportControls from './ExportControls';
 import DataControls from './DataControls';
@@ -31,6 +32,14 @@ export default function LifeGrid() {
     () => new Map(weekData.map(week => [week.weekNumber, week])),
     [weekData]
   );
+
+  const weekRows = useMemo(() => {
+    const rows = [];
+    for (let i = 0; i < weekData.length; i += WEEKS_PER_ROW) {
+      rows.push(weekData.slice(i, i + WEEKS_PER_ROW));
+    }
+    return rows;
+  }, [weekData]);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipTarget | null>(null);
@@ -59,6 +68,65 @@ export default function LifeGrid() {
   }, [weekLookup]);
 
   const clearTooltip = useCallback(() => setTooltip(null), []);
+
+  /* ---- keyboard navigation ---------------------------------------------
+     The grid is one tab stop. Focus stays on the container and
+     aria-activedescendant points at the active cell, so there is no
+     per-cell tabindex to shuffle and no focus() call on 4,680 elements. */
+
+  const [activeWeek, setActiveWeek] = useState<number | null>(null);
+  const [activeRect, setActiveRect] = useState<{ x: number; y: number; size: number } | null>(null);
+
+  /** Entry point: the current week if it is on the calendar, else week 1. */
+  const defaultWeek = useMemo(
+    () => weekData.find(week => week.isCurrent)?.weekNumber ?? 1,
+    [weekData]
+  );
+
+  const handleGridFocus = useCallback(() => {
+    setActiveWeek(week => week ?? defaultWeek);
+  }, [defaultWeek]);
+
+  const handleGridBlur = useCallback(() => {
+    setActiveWeek(null);
+    setTooltip(null);
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const current = activeWeek ?? defaultWeek;
+      const next = nextWeekForKey({
+        key: e.key,
+        current,
+        total: weekData.length,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+      });
+      if (next === null) return;
+      // Otherwise the arrows scroll the page out from under the grid.
+      e.preventDefault();
+      setActiveWeek(next);
+    },
+    [activeWeek, defaultWeek, weekData.length]
+  );
+
+  // Position the ring and tooltip from the active cell, and keep it on screen.
+  useEffect(() => {
+    const container = gridRef.current;
+    if (!activeWeek || !container) {
+      setActiveRect(null);
+      return;
+    }
+    const cell = container.querySelector<HTMLElement>(`[data-week="${activeWeek}"]`);
+    const week = weekLookup.get(activeWeek);
+    if (!cell || !week) return;
+
+    const box = cell.getBoundingClientRect();
+    const origin = container.getBoundingClientRect();
+    setActiveRect({ x: box.left - origin.left, y: box.top - origin.top, size: box.width });
+    setTooltip({ week, x: box.left - origin.left + box.width / 2, y: box.top - origin.top });
+    cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeWeek, weekLookup]);
 
   if (!userData) {
     return null;
@@ -170,8 +238,26 @@ export default function LifeGrid() {
               >
                 <WeekTooltip target={tooltip} />
 
-                {/* The squares themselves are aria-hidden — 4,680 labelled
-                    elements is noise. This is the grid's text alternative. */}
+                {/* Focus ring as an overlay rather than a class on the active
+                    cell: arrow keys then change no props on any of the 4,680
+                    squares, so none of them re-render. */}
+                {activeRect && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute z-10 rounded-[3px] print-hide"
+                    style={{
+                      left: activeRect.x - 2,
+                      top: activeRect.y - 2,
+                      width: activeRect.size + 4,
+                      height: activeRect.size + 4,
+                      outline: '2px solid var(--accent)',
+                      boxShadow: '0 0 0 1px var(--paper)',
+                    }}
+                  />
+                )}
+
+                {/* Summary first: faster to grasp than arrowing through
+                    4,680 cells, and complements rather than replaces them. */}
                 <p className="sr-only">
                   Life calendar for {userData.name}, born{' '}
                   {userData.birthDate.toLocaleDateString()}. {weekData.length.toLocaleString()}{' '}
@@ -184,7 +270,8 @@ export default function LifeGrid() {
                           event =>
                             `${event.title}, ${event.startDate.toLocaleDateString()} to ${event.endDate.toLocaleDateString()}`
                         )
-                        .join('; ')}.`}
+                        .join('; ')}.`}{' '}
+                  The grid below is navigable with the arrow keys.
                 </p>
 
                 <div className="flex min-w-fit mx-auto w-fit">
@@ -208,17 +295,36 @@ export default function LifeGrid() {
                     ))}
                   </div>
 
-                  {/* Weeks grid — 52 columns, rows flow automatically */}
+                  {/* Weeks grid. Rows are real elements rather than an
+                      implicit 52-column flow, because role="grid" needs
+                      role="row" children to be a navigable composite. Visually
+                      identical: a column of rows, each a 52-column grid. */}
                   <div
-                    className="grid"
-                    style={{
-                      gridTemplateColumns: 'repeat(52, var(--week-size))',
-                      gridAutoRows: 'var(--week-size)',
-                      gap: 'var(--week-gap)',
-                    }}
+                    role="grid"
+                    aria-label={`${userData.name}'s life in weeks. Use the arrow keys to move between weeks.`}
+                    aria-activedescendant={activeWeek ? `week-${activeWeek}` : undefined}
+                    tabIndex={0}
+                    onKeyDown={handleKeyDown}
+                    onFocus={handleGridFocus}
+                    onBlur={handleGridBlur}
+                    className="outline-none"
+                    style={{ rowGap: 'var(--week-gap)', display: 'grid' }}
                   >
-                    {weekData.map(week => (
-                      <WeekBox key={week.weekNumber} weekData={week} />
+                    {weekRows.map((row, rowIndex) => (
+                      <div
+                        key={rowIndex}
+                        role="row"
+                        className="grid"
+                        style={{
+                          gridTemplateColumns: 'repeat(52, var(--week-size))',
+                          gridAutoRows: 'var(--week-size)',
+                          columnGap: 'var(--week-gap)',
+                        }}
+                      >
+                        {row.map(week => (
+                          <WeekBox key={week.weekNumber} weekData={week} />
+                        ))}
+                      </div>
                     ))}
                   </div>
                 </div>
