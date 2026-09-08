@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import {
   themes,
   customizableTokens,
-  loadThemeSettings,
-  saveThemeSettings,
-  applyThemeSettings,
+  subscribeThemeSettings,
+  getThemeSettingsSnapshot,
+  getThemeSettingsServerSnapshot,
+  commitThemeSettings,
   ThemeId,
   ThemeSettings,
 } from '@/utils/themes';
@@ -31,21 +32,26 @@ function readTokenValues(): Record<string, string> {
 }
 
 export default function ThemeControls({ className = '' }: { className?: string }) {
-  const [settings, setSettings] = useState<ThemeSettings>({ theme: 'warm', custom: {} });
+  const settings = useSyncExternalStore(
+    subscribeThemeSettings,
+    getThemeSettingsSnapshot,
+    getThemeSettingsServerSnapshot
+  );
   const [tokenValues, setTokenValues] = useState<Record<string, string>>({});
   const [showCustom, setShowCustom] = useState(false);
 
-  // The pre-hydration script already applied the saved theme; sync our state to it.
-  useEffect(() => {
-    setSettings(loadThemeSettings());
-    setTokenValues(readTokenValues());
-  }, []);
-
   const update = (next: ThemeSettings) => {
-    setSettings(next);
-    applyThemeSettings(next);
-    saveThemeSettings(next);
-    setTokenValues(readTokenValues());
+    commitThemeSettings(next);
+    // The swatches mirror computed CSS values, so they only need re-reading
+    // while the panel that shows them is open.
+    if (showCustom) setTokenValues(readTokenValues());
+  };
+
+  // Read on open rather than on mount: getComputedStyle for every token is
+  // wasted work for the majority of visits, which never open this panel.
+  const toggleCustom = () => {
+    if (!showCustom) setTokenValues(readTokenValues());
+    setShowCustom(!showCustom);
   };
 
   const selectTheme = (theme: ThemeId) => {
@@ -89,7 +95,7 @@ export default function ThemeControls({ className = '' }: { className?: string }
       </div>
 
       <button
-        onClick={() => setShowCustom(v => !v)}
+        onClick={toggleCustom}
         className="mt-4 text-xs text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
         aria-expanded={showCustom}
       >

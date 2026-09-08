@@ -9,7 +9,7 @@ Everyone taking part is expected to follow the
 
 ## Getting set up
 
-Requires **Node.js 20+**.
+Requires **Node.js 22+**.
 
 ```bash
 git clone https://github.com/isstiaung/yliw.git
@@ -23,11 +23,13 @@ Before opening a PR, run the same checks CI runs:
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-All three must pass. There is no test suite yet — if you want to add one,
-that is a genuinely welcome contribution (see below).
+All four must pass. The tests cover the pure logic in `src/utils/` — dates,
+CSV parsing and storage. If you change any of those, add a case; if you add a
+new pure module, it belongs under test too.
 
 ## What makes a good contribution
 
@@ -35,8 +37,7 @@ that is a genuinely welcome contribution (see below).
 
 - Bug fixes, especially in date maths, CSV parsing, or print layout
 - New icons for the picker, or new theme presets
-- Accessibility improvements — the grid in particular could use better screen
-  reader and keyboard support
+- Accessibility improvements to the forms and controls
 - Print and layout fixes for edge cases (very long names, 100-year spans,
   dozens of overlapping events)
 - Export formats beyond print: SVG, PNG, ICS

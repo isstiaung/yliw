@@ -8,7 +8,7 @@
 <p align="center">
   <a href="#license"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://github.com/isstiaung/yliw/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/isstiaung/yliw/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white">
   <img alt="No tracking" src="https://img.shields.io/badge/tracking-none-brightgreen">
 </p>
 
@@ -72,7 +72,7 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
 
 ## Quick start
 
-Requires **Node.js 20+**.
+Requires **Node.js 22+**.
 
 ```bash
 git clone https://github.com/isstiaung/yliw.git
@@ -135,11 +135,12 @@ src/
 ├── contexts/
 │   └── LifeDataContext.tsx  # Single reducer + localStorage persistence
 ├── types/
-└── utils/
+└── utils/                   # Pure logic; *.test.ts sits beside each module
     ├── dateCalculations.ts  # Birth-relative week maths
     ├── csv.ts               # CSV parse + per-row validation
+    ├── icons.ts             # Milestone icon catalogue + name lookup
     ├── printStyles.ts       # Per-paper-size @media print rules
-    ├── themes.ts            # Theme presets + pre-hydration init script
+    ├── themes.ts            # Theme presets, init script, external store
     ├── localStorage.ts      # Save/load/export/import
     └── eventColors.ts
 ```
@@ -158,6 +159,8 @@ the default palette — if you change one, keep the other in sync.
 | `npm run start`     | Serve a production build                      |
 | `npm run lint`      | ESLint                                        |
 | `npm run typecheck` | TypeScript, no emit                           |
+| `npm test`          | Vitest, once                                  |
+| `npm run test:watch`| Vitest, watch mode                            |
 
 ## Deploying
 
@@ -170,7 +173,7 @@ variables to set.
 
 ## Built with
 
-[Next.js 15](https://nextjs.org) (App Router) · [React 19](https://react.dev) ·
+[Next.js 16](https://nextjs.org) (App Router) · [React 19](https://react.dev) ·
 [TypeScript](https://www.typescriptlang.org) ·
 [Tailwind CSS 4](https://tailwindcss.com) ·
 [date-fns](https://date-fns.org) · [react-icons](https://react-icons.github.io/react-icons/)

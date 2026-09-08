@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { WeekData } from '@/types';
-import { getIconComponent } from '@/utils/icons';
+import MilestoneIcon from './MilestoneIcon';
 import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
@@ -34,7 +34,6 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   }
 
   const age = getAgeFromWeek(weekData.weekNumber);
-  const IconComponent = event ? getIconComponent(event.icon) : null;
   const label = `Week ${weekData.weekNumber}, age ${age}${event ? ` — ${event.title}` : ''}`;
 
   return (
@@ -55,9 +54,10 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
       aria-label={label}
     >
       {/* Icon for events — scales with the box so it never overflows */}
-      {IconComponent && (
+      {event && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <IconComponent
+          <MilestoneIcon
+            name={event.icon}
             className="text-white opacity-85"
             style={{
               width: 'calc(var(--week-size, 10px) * 0.72)',
