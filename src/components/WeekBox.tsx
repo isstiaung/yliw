@@ -3,6 +3,8 @@
 import React from 'react';
 import { WeekData } from '@/types';
 import MilestoneIcon from './MilestoneIcon';
+import { describeWeek } from '@/utils/gridNavigation';
+import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
   weekData: WeekData;
@@ -19,8 +21,15 @@ interface WeekBoxProps {
  * renders one shared tooltip; these boxes just publish the data it needs
  * through `data-week`.
  *
- * The squares are aria-hidden because 4,680 individually labelled elements is
- * noise, not accessibility. The grid exposes a text summary instead.
+ * Each square is a real gridcell with an accessible name. That is affordable
+ * where the old markup was not: these used to be role="img", so a screen reader
+ * met 4,680 standalone images in the reading order. Inside a role="grid" the
+ * cells are a composite widget entered deliberately and traversed with the
+ * arrow keys, and only the active cell is announced.
+ *
+ * Nothing here depends on which cell is active. The focus ring is drawn as a
+ * single overlay by the grid, so arrow keys change no props on any square and
+ * React.memo keeps all 4,680 from re-rendering.
  */
 function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   const { isPast, isCurrent, event } = weekData;
@@ -48,8 +57,15 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   return (
     <div
       className={`week-box relative ${className}`}
+      id={`week-${weekData.weekNumber}`}
       data-week={weekData.weekNumber}
-      aria-hidden="true"
+      role="gridcell"
+      aria-label={describeWeek(
+        weekData.weekNumber,
+        getAgeFromWeek(weekData.weekNumber),
+        isCurrent ? 'current' : isPast ? 'past' : 'future',
+        event?.title
+      )}
       style={{
         '--bg-color': backgroundColor,
         '--border-color': borderColor,

@@ -172,6 +172,15 @@ body {
   outline-offset: 2px;
 }
 
+/* The week grid is a single tab stop, but the outline above would draw a box
+   around the entire grid — hundreds of pixels tall — on top of the ring that
+   marks the active cell. The ring is the real focus indicator here (the grid
+   uses aria-activedescendant), so the container's own outline is suppressed. */
+[role='grid']:focus,
+[role='grid']:focus-visible {
+  outline: none;
+}
+
 /* Paper texture: a soft amber glow from the top (afternoon light) over a
    subtle grain so large empty areas don't feel flat */
 .paper-grain {
