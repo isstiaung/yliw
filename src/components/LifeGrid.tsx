@@ -122,8 +122,8 @@ export default function LifeGrid() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Main Calendar */}
-          <div className="lg:col-span-3">
-            <div className="life-calendar-container card rise-in bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-6 sm:p-10">
+          <div className="lg:col-span-3 min-w-0">
+            <div className="life-calendar-container card rise-in bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-[var(--shadow-card)] p-4 sm:p-6 md:p-10">
               {/* Title */}
               <div className="calendar-head text-center mb-8">
                 <p className="text-xs font-mono uppercase tracking-[0.22em] text-[var(--accent)] mb-3">
@@ -165,7 +165,6 @@ export default function LifeGrid() {
               <div
                 ref={gridRef}
                 className="life-grid relative overflow-x-auto"
-                style={{ '--week-size': '10px', '--week-gap': '4px' } as React.CSSProperties}
                 onPointerOver={handlePointerOver}
                 onPointerLeave={clearTooltip}
               >

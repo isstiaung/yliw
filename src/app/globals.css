@@ -251,6 +251,49 @@ body {
 }
 
 /* Print styles for color preservation */
+/* Grid sizing.
+   52 columns at 10px is ~730px, which overflows any phone — horizontally
+   scrolling a poster is a poor way to read one, so the squares shrink with the
+   viewport instead. Both the boxes and the grid tracks read these variables,
+   so changing them here rescales the whole layout coherently. The print
+   stylesheet overrides them per paper size with !important. */
+.life-grid {
+  --week-size: 4.5px;
+  --week-gap: 1px;
+}
+
+@media (min-width: 480px) {
+  .life-grid {
+    --week-size: 6px;
+    --week-gap: 1.5px;
+  }
+}
+
+@media (min-width: 640px) {
+  .life-grid {
+    --week-size: 7.5px;
+    --week-gap: 2px;
+  }
+}
+
+/* 768px up also has to cover 1024-1279, where the sidebar appears and the
+   calendar column drops to three quarters of the width. */
+@media (min-width: 768px) {
+  .life-grid {
+    --week-size: 8.5px;
+    --week-gap: 2.5px;
+  }
+}
+
+/* Full size only once the container is wide enough that 52 columns at 10px
+   still clear the sidebar. */
+@media (min-width: 1280px) {
+  .life-grid {
+    --week-size: 10px;
+    --week-gap: 4px;
+  }
+}
+
 @media print {
   * {
     -webkit-print-color-adjust: exact !important;
