@@ -87,3 +87,44 @@ export function applyThemeSettings(settings: ThemeSettings): void {
  * applyThemeSettings; keep them in sync.
  */
 export const themeInitScript = `(function(){try{var s=JSON.parse(localStorage.getItem('${THEME_KEY}')||'null');if(!s)return;if(s.theme&&s.theme!=='warm')document.documentElement.setAttribute('data-theme',s.theme);var c=s.custom||{};for(var k in c){if(k.indexOf('--')===0&&typeof c[k]==='string')document.documentElement.style.setProperty(k,c[k]);}}catch(e){}})();`;
+
+/* --------------------------------------------------------------------------
+ * External store
+ *
+ * The theme lives outside React: a pre-hydration script in layout.tsx applies
+ * it before the first paint, and localStorage is the source of truth. Syncing
+ * that into state with a mount effect means a second render on every load and
+ * trips React's set-state-in-effect rule, so the store is exposed through
+ * useSyncExternalStore instead. The snapshot is cached because that hook
+ * requires a stable reference between changes.
+ * ----------------------------------------------------------------------- */
+
+let cachedSettings: ThemeSettings | null = null;
+const listeners = new Set<() => void>();
+
+/** Server render has no localStorage; a frozen constant keeps it stable. */
+const SERVER_SNAPSHOT: ThemeSettings = { theme: 'warm', custom: {} };
+
+export function subscribeThemeSettings(onChange: () => void): () => void {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
+
+export function getThemeSettingsSnapshot(): ThemeSettings {
+  if (!cachedSettings) cachedSettings = loadThemeSettings();
+  return cachedSettings;
+}
+
+export function getThemeSettingsServerSnapshot(): ThemeSettings {
+  return SERVER_SNAPSHOT;
+}
+
+/** Apply, persist and publish a new theme in one step. */
+export function commitThemeSettings(next: ThemeSettings): void {
+  cachedSettings = next;
+  applyThemeSettings(next);
+  saveThemeSettings(next);
+  for (const listener of listeners) listener();
+}

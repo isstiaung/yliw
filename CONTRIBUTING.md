@@ -9,7 +9,7 @@ Everyone taking part is expected to follow the
 
 ## Getting set up
 
-Requires **Node.js 20+**.
+Requires **Node.js 22+**.
 
 ```bash
 git clone https://github.com/isstiaung/yliw.git
@@ -23,11 +23,13 @@ Before opening a PR, run the same checks CI runs:
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-All three must pass. There is no test suite yet — if you want to add one,
-that is a genuinely welcome contribution (see below).
+All four must pass. The tests cover the pure logic in `src/utils/` — dates,
+CSV parsing and storage. If you change any of those, add a case; if you add a
+new pure module, it belongs under test too.
 
 ## What makes a good contribution
 
@@ -35,11 +37,10 @@ that is a genuinely welcome contribution (see below).
 
 - Bug fixes, especially in date maths, CSV parsing, or print layout
 - New icons for the picker, or new theme presets
-- Accessibility improvements — the grid in particular could use better screen
-  reader and keyboard support
+- Accessibility improvements to the forms and controls
 - Print and layout fixes for edge cases (very long names, 100-year spans,
   dozens of overlapping events)
-- Export formats beyond print: SVG, PNG, ICS
+- Further export formats, such as ICS
 - Documentation, including a real screenshot for the README
 
 **Please open an issue first if you're planning to**
@@ -60,9 +61,11 @@ These constraints explain most of the design decisions in the codebase:
 1. **Local-first, always.** No data leaves the browser. No accounts, no
    servers, no analytics, no third-party requests at runtime. A PR that adds
    one will be declined.
-2. **It has to print.** The screen view is secondary to the printed poster.
-   If a change affects layout, check it at both A4 and A0 with **Background
-   graphics** enabled.
+2. **It has to print, and it has to export.** The screen view is secondary to
+   the printed poster. If a change affects layout, check it at both A4 and A0
+   with **Background graphics** enabled, and check the SVG export still opens
+   — `src/utils/posterExport.ts` builds that independently of the DOM, so a
+   change to the grid does not automatically reach it.
 3. **Few dependencies.** The current list is short on purpose. Prefer ~30 lines
    of plain code over a package — the CSV parser in `src/utils/csv.ts` is a
    deliberate example.
@@ -96,6 +99,19 @@ If your change alters the UI enough to make `docs/screenshots/` stale, rerun
 is intentionally not a project dependency, so it's a one-time install. The
 script seeds a fictional persona; please don't replace it with real data, since
 these images ship in a public repo.
+
+### A note on the week grid
+
+The grid is a `role="grid"` composite with a single tab stop: focus stays on
+the container and `aria-activedescendant` points at the active cell. Two things
+follow from that, and both are easy to undo by accident:
+
+- The focus ring is an **overlay** positioned like the tooltip, not a class on
+  the active cell. Passing an `isActive` prop to the squares instead would make
+  React reconcile all 4,680 on every arrow key.
+- Movement rules live in `src/utils/gridNavigation.ts`, not in the component,
+  so they can be tested without a DOM. Add a case there rather than inlining
+  new key handling.
 
 ### A note on the theme init script
 

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { WeekData } from '@/types';
-import { getIconComponent } from './IconPicker';
+import MilestoneIcon from './MilestoneIcon';
+import { describeWeek } from '@/utils/gridNavigation';
 import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
@@ -10,6 +11,26 @@ interface WeekBoxProps {
   className?: string;
 }
 
+/**
+ * One square. Deliberately as light as it can be: a 90-year calendar renders
+ * 4,680 of these, so anything per-box is paid 4,680 times.
+ *
+ * There is no tooltip here. Each box used to render its own hidden hover card,
+ * which accounted for roughly 24,000 of the page's 30,000 DOM nodes to show
+ * one card at a time. The grid now delegates hover from a single listener and
+ * renders one shared tooltip; these boxes just publish the data it needs
+ * through `data-week`.
+ *
+ * Each square is a real gridcell with an accessible name. That is affordable
+ * where the old markup was not: these used to be role="img", so a screen reader
+ * met 4,680 standalone images in the reading order. Inside a role="grid" the
+ * cells are a composite widget entered deliberately and traversed with the
+ * arrow keys, and only the active cell is announced.
+ *
+ * Nothing here depends on which cell is active. The focus ring is drawn as a
+ * single overlay by the grid, so arrow keys change no props on any square and
+ * React.memo keeps all 4,680 from re-rendering.
+ */
 function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   const { isPast, isCurrent, event } = weekData;
 
@@ -33,13 +54,18 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
     borderColor = event.color;
   }
 
-  const age = getAgeFromWeek(weekData.weekNumber);
-  const IconComponent = event ? getIconComponent(event.icon) : null;
-  const label = `Week ${weekData.weekNumber}, age ${age}${event ? ` — ${event.title}` : ''}`;
-
   return (
     <div
-      className={`week-box relative group ${className}`}
+      className={`week-box relative ${className}`}
+      id={`week-${weekData.weekNumber}`}
+      data-week={weekData.weekNumber}
+      role="gridcell"
+      aria-label={describeWeek(
+        weekData.weekNumber,
+        getAgeFromWeek(weekData.weekNumber),
+        isCurrent ? 'current' : isPast ? 'past' : 'future',
+        event?.title
+      )}
       style={{
         '--bg-color': backgroundColor,
         '--border-color': borderColor,
@@ -51,13 +77,12 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
         WebkitPrintColorAdjust: 'exact',
         printColorAdjust: 'exact',
       } as React.CSSProperties}
-      role="img"
-      aria-label={label}
     >
       {/* Icon for events — scales with the box so it never overflows */}
-      {IconComponent && (
+      {event && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <IconComponent
+          <MilestoneIcon
+            name={event.icon}
             className="text-white opacity-85"
             style={{
               width: 'calc(var(--week-size, 10px) * 0.72)',
@@ -79,25 +104,6 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
           />
         </div>
       )}
-
-      {/* Hover tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-[var(--ink)] text-[var(--paper)] text-xs rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
-        <div className="text-center">
-          <div className="font-medium">
-            Week {weekData.weekNumber}
-          </div>
-          <div className="text-[var(--paper)]/60">
-            Age {age}
-          </div>
-          {event && (
-            <div className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>
-              {event.title}
-            </div>
-          )}
-        </div>
-        {/* Tooltip arrow */}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
-      </div>
     </div>
   );
 }
