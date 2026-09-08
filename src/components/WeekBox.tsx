@@ -3,13 +3,25 @@
 import React from 'react';
 import { WeekData } from '@/types';
 import MilestoneIcon from './MilestoneIcon';
-import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
   weekData: WeekData;
   className?: string;
 }
 
+/**
+ * One square. Deliberately as light as it can be: a 90-year calendar renders
+ * 4,680 of these, so anything per-box is paid 4,680 times.
+ *
+ * There is no tooltip here. Each box used to render its own hidden hover card,
+ * which accounted for roughly 24,000 of the page's 30,000 DOM nodes to show
+ * one card at a time. The grid now delegates hover from a single listener and
+ * renders one shared tooltip; these boxes just publish the data it needs
+ * through `data-week`.
+ *
+ * The squares are aria-hidden because 4,680 individually labelled elements is
+ * noise, not accessibility. The grid exposes a text summary instead.
+ */
 function WeekBox({ weekData, className = '' }: WeekBoxProps) {
   const { isPast, isCurrent, event } = weekData;
 
@@ -33,12 +45,11 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
     borderColor = event.color;
   }
 
-  const age = getAgeFromWeek(weekData.weekNumber);
-  const label = `Week ${weekData.weekNumber}, age ${age}${event ? ` — ${event.title}` : ''}`;
-
   return (
     <div
-      className={`week-box relative group ${className}`}
+      className={`week-box relative ${className}`}
+      data-week={weekData.weekNumber}
+      aria-hidden="true"
       style={{
         '--bg-color': backgroundColor,
         '--border-color': borderColor,
@@ -50,8 +61,6 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
         WebkitPrintColorAdjust: 'exact',
         printColorAdjust: 'exact',
       } as React.CSSProperties}
-      role="img"
-      aria-label={label}
     >
       {/* Icon for events — scales with the box so it never overflows */}
       {event && (
@@ -79,25 +88,6 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
           />
         </div>
       )}
-
-      {/* Hover tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-[var(--ink)] text-[var(--paper)] text-xs rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
-        <div className="text-center">
-          <div className="font-medium">
-            Week {weekData.weekNumber}
-          </div>
-          <div className="text-[var(--paper)]/60">
-            Age {age}
-          </div>
-          {event && (
-            <div className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>
-              {event.title}
-            </div>
-          )}
-        </div>
-        {/* Tooltip arrow */}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
-      </div>
     </div>
   );
 }

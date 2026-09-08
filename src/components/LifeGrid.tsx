@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
+import WeekTooltip, { TooltipTarget } from './WeekTooltip';
 import PrintControls from './PrintControls';
 import DataControls from './DataControls';
 import ThemeControls from './ThemeControls';
@@ -24,6 +25,39 @@ export default function LifeGrid() {
         : [],
     [userData]
   );
+
+  const weekLookup = useMemo(
+    () => new Map(weekData.map(week => [week.weekNumber, week])),
+    [weekData]
+  );
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [tooltip, setTooltip] = useState<TooltipTarget | null>(null);
+
+  // One delegated listener for the whole grid rather than handlers on 4,680
+  // boxes: the squares carry their week number in `data-week`, and the shared
+  // tooltip is positioned from the hovered square's box.
+  const handlePointerOver = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const square = (e.target as HTMLElement).closest<HTMLElement>('[data-week]');
+    const container = gridRef.current;
+    if (!square || !container) {
+      setTooltip(null);
+      return;
+    }
+    const weekNumber = Number(square.dataset.week);
+    const week = weekLookup.get(weekNumber);
+    if (!week) return;
+
+    const box = square.getBoundingClientRect();
+    const origin = container.getBoundingClientRect();
+    setTooltip({
+      week,
+      x: box.left - origin.left + box.width / 2,
+      y: box.top - origin.top,
+    });
+  }, [weekLookup]);
+
+  const clearTooltip = useCallback(() => setTooltip(null), []);
 
   if (!userData) {
     return null;
@@ -128,9 +162,31 @@ export default function LifeGrid() {
                   and the grid tracks, so the print stylesheet can rescale
                   the whole layout by overriding just these two variables. */}
               <div
-                className="life-grid overflow-x-auto"
+                ref={gridRef}
+                className="life-grid relative overflow-x-auto"
                 style={{ '--week-size': '10px', '--week-gap': '4px' } as React.CSSProperties}
+                onPointerOver={handlePointerOver}
+                onPointerLeave={clearTooltip}
               >
+                <WeekTooltip target={tooltip} />
+
+                {/* The squares themselves are aria-hidden — 4,680 labelled
+                    elements is noise. This is the grid's text alternative. */}
+                <p className="sr-only">
+                  Life calendar for {userData.name}, born{' '}
+                  {userData.birthDate.toLocaleDateString()}. {weekData.length.toLocaleString()}{' '}
+                  weeks in total, one square per week from birth to age {userData.endAge}.{' '}
+                  {weeksLived.toLocaleString()} weeks lived, {pctLived}% of the calendar.{' '}
+                  {userData.events.length === 0
+                    ? 'No milestones recorded.'
+                    : `${userData.events.length} milestones: ${userData.events
+                        .map(
+                          event =>
+                            `${event.title}, ${event.startDate.toLocaleDateString()} to ${event.endDate.toLocaleDateString()}`
+                        )
+                        .join('; ')}.`}
+                </p>
+
                 <div className="flex min-w-fit mx-auto w-fit">
                   {/* Age labels column — same row size + gap so labels stay
                       aligned with the week rows at every paper size */}
