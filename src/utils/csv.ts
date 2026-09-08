@@ -1,6 +1,6 @@
 import { parseLocalDate } from './dateCalculations';
 import { eventColors } from './eventColors';
-import { iconOptions } from '@/components/IconPicker';
+import { iconOptions } from './icons';
 
 export interface ParsedCsvEvent {
   title: string;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { WeekData } from '@/types';
-import { getIconComponent } from './IconPicker';
+import { getIconComponent } from '@/utils/icons';
 import { getAgeFromWeek } from '@/utils/dateCalculations';
 
 interface WeekBoxProps {
