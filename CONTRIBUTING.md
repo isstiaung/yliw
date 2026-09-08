@@ -40,7 +40,7 @@ new pure module, it belongs under test too.
 - Accessibility improvements to the forms and controls
 - Print and layout fixes for edge cases (very long names, 100-year spans,
   dozens of overlapping events)
-- Export formats beyond print: SVG, PNG, ICS
+- Further export formats, such as ICS
 - Documentation, including a real screenshot for the README
 
 **Please open an issue first if you're planning to**
@@ -61,9 +61,11 @@ These constraints explain most of the design decisions in the codebase:
 1. **Local-first, always.** No data leaves the browser. No accounts, no
    servers, no analytics, no third-party requests at runtime. A PR that adds
    one will be declined.
-2. **It has to print.** The screen view is secondary to the printed poster.
-   If a change affects layout, check it at both A4 and A0 with **Background
-   graphics** enabled.
+2. **It has to print, and it has to export.** The screen view is secondary to
+   the printed poster. If a change affects layout, check it at both A4 and A0
+   with **Background graphics** enabled, and check the SVG export still opens
+   — `src/utils/posterExport.ts` builds that independently of the DOM, so a
+   change to the grid does not automatically reach it.
 3. **Few dependencies.** The current list is short on purpose. Prefer ~30 lines
    of plain code over a package — the CSV parser in `src/utils/csv.ts` is a
    deliberate example.
