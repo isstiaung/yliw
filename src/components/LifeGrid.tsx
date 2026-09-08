@@ -6,6 +6,7 @@ import { generateWeekData } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import WeekTooltip, { TooltipTarget } from './WeekTooltip';
 import PrintControls from './PrintControls';
+import ExportControls from './ExportControls';
 import DataControls from './DataControls';
 import ThemeControls from './ThemeControls';
 import Logo from './Logo';
@@ -273,6 +274,7 @@ export default function LifeGrid() {
             <div className="space-y-5">
               <ThemeControls />
               <PrintControls />
+              <ExportControls userData={userData} weekData={weekData} />
               <DataControls />
 
               {userData.events.length > 0 && (
