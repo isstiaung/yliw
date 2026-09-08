@@ -8,7 +8,7 @@
 <p align="center">
   <a href="#license"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://github.com/isstiaung/yliw/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/isstiaung/yliw/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white">
   <img alt="No tracking" src="https://img.shields.io/badge/tracking-none-brightgreen">
 </p>
 
@@ -41,6 +41,10 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
 - **Four themes, fully recolourable.** Warm, Light, Dark, and Sketch presets,
   plus per-token colour overrides for background, ink, accent, and each of the
   three week states.
+- **Export as PNG or SVG.** Share it as an image, or hand a print shop a real
+  vector that stays sharp at any size. Both use your current theme.
+- **Fits any screen.** The whole 90-year grid is visible on a phone — no
+  sideways scrolling to reach the last decade.
 - **Portable data.** Export and import the whole calendar as JSON.
 
 ## Screens
@@ -72,7 +76,7 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
 
 ## Quick start
 
-Requires **Node.js 20+**.
+Requires **Node.js 22+**.
 
 ```bash
 git clone https://github.com/isstiaung/yliw.git
@@ -114,9 +118,13 @@ Wedding day,2019-05-18,,#a63d2f,Marriage
 Trip to Japan,2022-04-02,2022-04-16,,Plane
 ```
 
-### Printing
+### Exporting and printing
 
-Pick a size in the print panel and hit print. Two things matter for a good
+**Save as image** produces a PNG for sharing or an SVG for print. The SVG is
+generated from the week data rather than screenshotted, so it is a true vector
+— a few hundred KB that scales to a wall poster without softening.
+
+For paper, pick a size in the print panel and hit print. Two things matter for a good
 result: enable **Background graphics** in the browser print dialog, or every
 square comes out white; and remember the poster prints in whatever theme is
 active, so a light theme will save a lot of ink. A4 and A3 suit home printers;
@@ -135,11 +143,13 @@ src/
 ├── contexts/
 │   └── LifeDataContext.tsx  # Single reducer + localStorage persistence
 ├── types/
-└── utils/
+└── utils/                   # Pure logic; *.test.ts sits beside each module
     ├── dateCalculations.ts  # Birth-relative week maths
     ├── csv.ts               # CSV parse + per-row validation
+    ├── icons.ts             # Milestone icon catalogue + name lookup
+    ├── posterExport.ts      # Poster as SVG, and SVG rasterised to PNG
     ├── printStyles.ts       # Per-paper-size @media print rules
-    ├── themes.ts            # Theme presets + pre-hydration init script
+    ├── themes.ts            # Theme presets, init script, external store
     ├── localStorage.ts      # Save/load/export/import
     └── eventColors.ts
 ```
@@ -158,6 +168,8 @@ the default palette — if you change one, keep the other in sync.
 | `npm run start`     | Serve a production build                      |
 | `npm run lint`      | ESLint                                        |
 | `npm run typecheck` | TypeScript, no emit                           |
+| `npm test`          | Vitest, once                                  |
+| `npm run test:watch`| Vitest, watch mode                            |
 
 ## Deploying
 
@@ -170,7 +182,7 @@ variables to set.
 
 ## Built with
 
-[Next.js 15](https://nextjs.org) (App Router) · [React 19](https://react.dev) ·
+[Next.js 16](https://nextjs.org) (App Router) · [React 19](https://react.dev) ·
 [TypeScript](https://www.typescriptlang.org) ·
 [Tailwind CSS 4](https://tailwindcss.com) ·
 [date-fns](https://date-fns.org) · [react-icons](https://react-icons.github.io/react-icons/)
@@ -181,8 +193,8 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
 conventions, and what makes a PR easy to merge. Everyone taking part is
 expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Good places to start: more icons, additional theme presets, accessibility
-improvements to the grid, and export formats beyond print (SVG, PNG).
+Good places to start: more icons, additional theme presets, keyboard navigation
+for the grid, and further export formats such as ICS.
 
 To report a security issue, please follow [SECURITY.md](SECURITY.md) rather
 than opening a public issue.

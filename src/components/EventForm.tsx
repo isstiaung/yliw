@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { LifeEvent } from '@/types';
 import { mapDateRangeToWeeks, parseLocalDate, formatDateForInput } from '@/utils/dateCalculations';
 import { eventColors } from '@/utils/eventColors';
-import { CSV_TEMPLATE, parseEventsCsv } from '@/utils/csv';
-import IconPicker, { getIconComponent } from './IconPicker';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaFileCsv, FaUpload } from 'react-icons/fa';
+import IconPicker from './IconPicker';
+import CsvImport from './CsvImport';
+import MilestoneIcon from './MilestoneIcon';
+import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 interface EventFormData {
@@ -21,8 +22,6 @@ interface EventFormData {
 export default function EventForm() {
   const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
   const router = useRouter();
-  const csvInputRef = useRef<HTMLInputElement>(null);
-  const [csvMessage, setCsvMessage] = useState<{ text: string; errors: string[] } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>({
@@ -169,37 +168,6 @@ export default function EventForm() {
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'milestones-template.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !state.userData) return;
-
-    const { birthDate, endAge } = state.userData;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { events, errors } = parseEventsCsv(String(reader.result), birthDate, endAge);
-      events.forEach(event => addEvent(event));
-      setCsvMessage({
-        text:
-          events.length > 0
-            ? `Imported ${events.length} milestone${events.length === 1 ? '' : 's'}.`
-            : 'Nothing imported.',
-        errors,
-      });
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
   const proceedToCalendar = () => {
     router.push("/calendar");
   };
@@ -207,8 +175,6 @@ export default function EventForm() {
   if (!state.userData) {
     return null;
   }
-
-  const IconComponent = getIconComponent(formData.icon);
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-3 bg-[var(--surface)] border rounded-md text-[var(--ink)] placeholder:text-[var(--muted)]/60 outline-none transition-shadow focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] ${
@@ -247,51 +213,8 @@ export default function EventForm() {
               View life calendar
             </button>
             <div className="h-5 w-px bg-[var(--line)] hidden sm:block" />
-            <button
-              onClick={handleDownloadTemplate}
-              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
-              title="Download a CSV template to fill in"
-            >
-              <FaFileCsv className="w-3.5 h-3.5" />
-              CSV template
-            </button>
-            <button
-              onClick={() => csvInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-md text-sm border border-[var(--line)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
-              title="Upload a filled-in CSV of milestones"
-            >
-              <FaUpload className="w-3.5 h-3.5" />
-              Upload CSV
-            </button>
-            <input
-              ref={csvInputRef}
-              type="file"
-              accept="text/csv,.csv"
-              onChange={handleCsvUpload}
-              className="hidden"
-            />
+            <CsvImport />
           </div>
-          <p className="text-xs text-[var(--muted)]/70 mb-8">
-            Lots of milestones? Download the CSV template, fill it in, and upload it — no need to use the form.
-          </p>
-
-          {csvMessage && (
-            <div className="mb-8 rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4 text-sm">
-              <p className="text-[var(--ink)] font-medium">{csvMessage.text}</p>
-              {csvMessage.errors.length > 0 && (
-                <ul className="mt-2 space-y-0.5 text-[var(--accent)]">
-                  {csvMessage.errors.slice(0, 5).map(error => (
-                    <li key={error}>{error}</li>
-                  ))}
-                  {csvMessage.errors.length > 5 && (
-                    <li className="text-[var(--muted)]">
-                      …and {csvMessage.errors.length - 5} more rows skipped.
-                    </li>
-                  )}
-                </ul>
-              )}
-            </div>
-          )}
 
           {state.userData.events.length > 0 ? (
             <div>
@@ -303,7 +226,6 @@ export default function EventForm() {
                   .slice()
                   .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
                   .map(event => {
-                    const EventIcon = getIconComponent(event.icon);
                     const isSameDate = event.startDate.toDateString() === event.endDate.toDateString();
 
                     return (
@@ -313,12 +235,12 @@ export default function EventForm() {
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            {EventIcon && (
+                            {event.icon && (
                               <div
                                 className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
                                 style={{ backgroundColor: event.color }}
                               >
-                                <EventIcon className="w-4 h-4" />
+                                <MilestoneIcon name={event.icon} className="w-4 h-4" />
                               </div>
                             )}
                             <h3 className="font-medium text-[var(--ink)] truncate">{event.title}</h3>
@@ -481,14 +403,12 @@ export default function EventForm() {
                 <div className="bg-[var(--paper)] border border-[var(--line)] rounded-lg p-4">
                   <div className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-3">Preview</div>
                   <div className="flex items-center gap-3">
-                    {IconComponent && (
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: formData.color }}
-                      >
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                    )}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                      style={{ backgroundColor: formData.color }}
+                    >
+                      <MilestoneIcon name={formData.icon} className="w-5 h-5" />
+                    </div>
                     <div>
                       <div className="font-medium text-[var(--ink)]">
                         {formData.title || 'Event title'}
