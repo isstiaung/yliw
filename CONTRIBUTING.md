@@ -100,6 +100,19 @@ is intentionally not a project dependency, so it's a one-time install. The
 script seeds a fictional persona; please don't replace it with real data, since
 these images ship in a public repo.
 
+### A note on the week grid
+
+The grid is a `role="grid"` composite with a single tab stop: focus stays on
+the container and `aria-activedescendant` points at the active cell. Two things
+follow from that, and both are easy to undo by accident:
+
+- The focus ring is an **overlay** positioned like the tooltip, not a class on
+  the active cell. Passing an `isActive` prop to the squares instead would make
+  React reconcile all 4,680 on every arrow key.
+- Movement rules live in `src/utils/gridNavigation.ts`, not in the component,
+  so they can be tested without a DOM. Add a case there rather than inlining
+  new key handling.
+
 ### A note on the theme init script
 
 `src/utils/themes.ts` exports `themeInitScript`, an inline script that applies
