@@ -96,8 +96,14 @@ describe('describeWeek', () => {
   });
 
   it('appends the milestone when there is one', () => {
-    expect(describeWeek(1904, 36, 'past', 'Built the company')).toBe(
+    expect(describeWeek(1904, 36, 'past', ['Built the company'])).toBe(
       'Week 1,904, age 36, lived, Built the company'
+    );
+  });
+
+  it('names every overlapping milestone', () => {
+    expect(describeWeek(1528, 29, 'past', ['Wedding', 'Built the company'])).toBe(
+      'Week 1,528, age 29, lived, Wedding and Built the company'
     );
   });
 });

@@ -66,10 +66,10 @@ export function describeWeek(
   weekNumber: number,
   age: number,
   state: 'past' | 'current' | 'future',
-  eventTitle?: string
+  eventTitles: string[] = []
 ): string {
   const stateLabel =
     state === 'current' ? 'this week' : state === 'past' ? 'lived' : 'not yet lived';
-  const suffix = eventTitle ? `, ${eventTitle}` : '';
+  const suffix = eventTitles.length ? `, ${eventTitles.join(' and ')}` : '';
   return `Week ${weekNumber.toLocaleString()}, age ${age}, ${stateLabel}${suffix}`;
 }
