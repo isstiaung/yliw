@@ -107,3 +107,23 @@ describe('buildPosterSvg', () => {
     expect(textContent.join(' ')).toContain('&lt;angle&gt;');
   });
 });
+
+describe('attribute escaping', () => {
+  it('escapes colours from the palette and events, even if validation is bypassed', () => {
+    const evil = '"/><script>alert(1)</script><x a="';
+    const user = makeUser({
+      events: [{
+        id: 'e', title: 't', startDate: parseLocalDate('2008-09-15'), endDate: parseLocalDate('2008-09-20'),
+        color: evil, icon: 'Star', startWeekNumber: 0, endWeekNumber: 0,
+      }],
+    });
+    const svg = buildPosterSvg({
+      userData: user,
+      weekData: generateWeekData(user.birthDate, user.endAge, user.events),
+      palette: { paper: evil, ink: evil, muted: evil, line: evil, accent: evil, weekFuture: evil,
+                 weekFutureBorder: evil, weekPast: evil, weekPastBorder: evil, weekCurrent: evil },
+    });
+    expect(svg).not.toContain('<script>');
+    expect(svg).toContain('&lt;script&gt;');
+  });
+});

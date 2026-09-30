@@ -165,3 +165,28 @@ describe('export / import', () => {
     expect(importUserData('not json at all')).toBeNull();
   });
 });
+
+describe('colour validation', () => {
+  const withColor = (color: unknown) => {
+    localStorage.setItem('yliw-user-data', JSON.stringify({
+      name: 'A', birthDate: '1990-03-12T00:00:00.000Z', endAge: 90,
+      events: [{ title: 't', startDate: '2008-09-15T00:00:00.000Z', endDate: '2008-09-15T00:00:00.000Z', color }],
+    }));
+    return loadUserData()!.events[0].color;
+  };
+
+  it.each(['#abc', '#aabbcc', '#AABBCC', '#aabbccdd'])('keeps hex colour %s', c => {
+    expect(withColor(c)).toBe(c);
+  });
+
+  it.each([
+    '"/><script>alert(1)</script>',
+    'red',
+    'url(javascript:alert(1))',
+    '#gggggg',
+    '#12345',
+    123,
+  ])('replaces unsafe colour %o with the default', c => {
+    expect(withColor(c)).toBe('#b4471f');
+  });
+});

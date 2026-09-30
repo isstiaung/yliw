@@ -106,15 +106,15 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
   );
   parts.push(
     `<title>${escapeXml(userData.name)}&apos;s Life in Weeks</title>`,
-    `<rect width="${width}" height="${height}" fill="${palette.paper}"/>`
+    `<rect width="${width}" height="${height}" fill="${escapeXml(palette.paper)}"/>`
   );
 
   // Header
   const centre = width / 2;
   parts.push(
-    `<text x="${centre}" y="${padding + 22}" text-anchor="middle" font-family="ui-monospace, monospace" font-size="15" letter-spacing="4" fill="${palette.accent}">MEMENTO MORI</text>`,
-    `<text x="${centre}" y="${padding + 74}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" fill="${palette.ink}">${escapeXml(userData.name)}&apos;s Life in Weeks</text>`,
-    `<text x="${centre}" y="${padding + 106}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" fill="${palette.muted}">Born ${escapeXml(userData.birthDate.toLocaleDateString())} · each square is one week</text>`
+    `<text x="${centre}" y="${padding + 22}" text-anchor="middle" font-family="ui-monospace, monospace" font-size="15" letter-spacing="4" fill="${escapeXml(palette.accent)}">MEMENTO MORI</text>`,
+    `<text x="${centre}" y="${padding + 74}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" fill="${escapeXml(palette.ink)}">${escapeXml(userData.name)}&apos;s Life in Weeks</text>`,
+    `<text x="${centre}" y="${padding + 106}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" fill="${escapeXml(palette.muted)}">Born ${escapeXml(userData.birthDate.toLocaleDateString())} · each square is one week</text>`
   );
 
   // Legend — the fixed states, then one entry per milestone.
@@ -131,8 +131,8 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     const x = padding + col * columnWidth;
     const y = padding + headerHeight + row * 26;
     parts.push(
-      `<rect x="${x}" y="${y}" width="12" height="12" rx="2" fill="${color}" stroke="${palette.line}"/>`,
-      `<text x="${x + 19}" y="${y + 11}" font-family="system-ui, sans-serif" font-size="13" fill="${palette.ink}">${escapeXml(label)}</text>`
+      `<rect x="${x}" y="${y}" width="12" height="12" rx="2" fill="${escapeXml(color)}" stroke="${escapeXml(palette.line)}"/>`,
+      `<text x="${x + 19}" y="${y + 11}" font-family="system-ui, sans-serif" font-size="13" fill="${escapeXml(palette.ink)}">${escapeXml(label)}</text>`
     );
   });
 
@@ -141,7 +141,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     const year = row + 1;
     if (year % 5 !== 0) continue;
     parts.push(
-      `<text x="${gridLeft - 12}" y="${gridTop + row * step + box - 2}" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="${palette.muted}">${year}</text>`
+      `<text x="${gridLeft - 12}" y="${gridTop + row * step + box - 2}" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="${escapeXml(palette.muted)}">${year}</text>`
     );
   }
 
@@ -153,7 +153,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     const row = Math.floor(index / WEEKS_PER_ROW);
     const [fill, stroke] = weekFill(week, palette);
     parts.push(
-      `<rect x="${gridLeft + col * step}" y="${gridTop + row * step}" width="${box}" height="${box}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`
+      `<rect x="${gridLeft + col * step}" y="${gridTop + row * step}" width="${box}" height="${box}" rx="2" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="1"/>`
     );
     if (week.isCurrent && !week.event) {
       parts.push(
@@ -166,8 +166,8 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
   let footerY = gridTop + gridHeight + 46;
   if (userData.quote) {
     parts.push(
-      `<line x1="${padding}" y1="${footerY - 26}" x2="${width - padding}" y2="${footerY - 26}" stroke="${palette.line}"/>`,
-      `<text x="${centre}" y="${footerY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="19" fill="${palette.ink}">&#8220;${escapeXml(userData.quote)}&#8221;</text>`
+      `<line x1="${padding}" y1="${footerY - 26}" x2="${width - padding}" y2="${footerY - 26}" stroke="${escapeXml(palette.line)}"/>`,
+      `<text x="${centre}" y="${footerY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="19" fill="${escapeXml(palette.ink)}">&#8220;${escapeXml(userData.quote)}&#8221;</text>`
     );
     footerY += 46;
   }
@@ -179,13 +179,13 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     [userData.events.length.toLocaleString(), 'MILESTONES'],
   ];
   parts.push(
-    `<line x1="${padding}" y1="${footerY - 18}" x2="${width - padding}" y2="${footerY - 18}" stroke="${palette.line}"/>`
+    `<line x1="${padding}" y1="${footerY - 18}" x2="${width - padding}" y2="${footerY - 18}" stroke="${escapeXml(palette.line)}"/>`
   );
   stats.forEach(([value, label], index) => {
     const x = padding + (index + 0.5) * ((width - padding * 2) / 4);
     parts.push(
-      `<text x="${x}" y="${footerY + 22}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${palette.ink}">${escapeXml(value)}</text>`,
-      `<text x="${x}" y="${footerY + 42}" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" letter-spacing="2" fill="${palette.muted}">${label}</text>`
+      `<text x="${x}" y="${footerY + 22}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${escapeXml(palette.ink)}">${escapeXml(value)}</text>`,
+      `<text x="${x}" y="${footerY + 42}" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" letter-spacing="2" fill="${escapeXml(palette.muted)}">${label}</text>`
     );
   });
 
