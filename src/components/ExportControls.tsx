@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { UserData, WeekData } from '@/types';
-import { downloadPosterPng, downloadPosterSvg, readPalette } from '@/utils/posterExport';
-import { FaDownload, FaFileImage } from 'react-icons/fa';
+import { downloadPosterPng, downloadPosterSvg, fileStem, readPalette } from '@/utils/posterExport';
+import { downloadIcs } from '@/utils/ics';
+import { FaCalendarAlt, FaDownload, FaFileImage } from 'react-icons/fa';
 
 interface ExportControlsProps {
   userData: UserData;
@@ -18,15 +19,20 @@ interface ExportControlsProps {
  * data, and the SVG is a real vector rather than a screenshot.
  */
 export default function ExportControls({ userData, weekData, className = '' }: ExportControlsProps) {
-  const [busy, setBusy] = useState<'png' | 'svg' | null>(null);
+  const [busy, setBusy] = useState<'png' | 'svg' | 'ics' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const run = async (kind: 'png' | 'svg') => {
+  const run = async (kind: 'png' | 'svg' | 'ics') => {
     setBusy(kind);
     setError(null);
     try {
       const options = { userData, weekData, palette: readPalette() };
       if (kind === 'svg') downloadPosterSvg(options);
+      else if (kind === 'ics')
+        downloadIcs(
+          { calendarName: `${userData.name}'s milestones`, events: userData.events },
+          `${fileStem(userData.name)}.ics`
+        );
       else await downloadPosterPng(options);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Export failed.');
@@ -41,7 +47,7 @@ export default function ExportControls({ userData, weekData, className = '' }: E
   return (
     <div className={`card bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5 ${className}`}>
       <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)] mb-4">
-        Save as image
+        Export
       </h3>
 
       <div className="space-y-2">
@@ -53,11 +59,21 @@ export default function ExportControls({ userData, weekData, className = '' }: E
           <FaDownload className="w-3.5 h-3.5" />
           {busy === 'svg' ? 'Rendering…' : 'Download SVG'}
         </button>
+        <button
+          onClick={() => run('ics')}
+          disabled={busy !== null || userData.events.length === 0}
+          className={buttonClass}
+          title={userData.events.length === 0 ? 'Add a milestone first' : undefined}
+        >
+          <FaCalendarAlt className="w-3.5 h-3.5" />
+          Milestones as calendar (.ics)
+        </button>
       </div>
 
       <p className="mt-3 text-xs text-[var(--muted)]/80">
         PNG for sharing; SVG stays sharp at any size and is what a print shop
-        wants. Both use your current theme.
+        wants. Both use your current theme. The .ics file imports your
+        milestones into Apple, Google or Outlook calendars.
       </p>
 
       {error && (
