@@ -14,7 +14,7 @@
  * indicator stays out of the images.
  */
 
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.YLIW_BASE ?? 'http://127.0.0.1:4173';
