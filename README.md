@@ -48,6 +48,12 @@ Inspired by Tim Urban's [*Your Life in Weeks*](https://waitbutwhy.com/2014/05/li
   vector that stays sharp at any size. Both use your current theme.
 - **Fits any screen.** The whole 90-year grid is visible on a phone — no
   sideways scrolling to reach the last decade.
+- **Share by link, with no server.** The calendar travels inside the link.
+  Optionally protect it with a passphrase — see [Sharing](#sharing).
+- **Milestones in your calendar app.** Export them as an `.ics` file for
+  Apple, Google or Outlook calendars.
+- **Installable, and works offline.** Add it to your home screen; after one
+  visit it opens with no connection.
 - **Portable data.** Export and import the whole calendar as JSON.
 
 ## Screens
@@ -101,9 +107,21 @@ The app moves through three phases, held in a single reducer
    against your birth date and chosen end age.
 3. **Calendar** — the grid itself, at `/calendar`, with the print panel.
 
-Week numbering is computed from your birth date rather than the ISO calendar,
-so week 1 is the week you were born (`src/utils/dateCalculations.ts`). The grid
-renders one row per year of life and one column per week within that year.
+### How the weeks line up
+
+Every row is one year of life and **starts exactly on your birthday**. Square
+*i* in a row covers days 7*i* to 7*i*+6 after that birthday. A year is 365 or
+366 days and 52 weeks is only 364, so the last square in each row absorbs the
+extra day or two — an 8- or 9-day "week".
+
+That keeps the grid a clean 52 wide while making every age label exact. The
+simpler approach, a flat 52 weeks counted from birth, drifts about a day and a
+quarter per row: by row 90 the "age 89" row would start roughly three months
+late. People born on 29 February get their birthday on 28 February in common
+years. The rules live in `src/utils/dateCalculations.ts`.
+
+Where milestones overlap, the **shorter one** takes the square — a one-week
+wedding stays visible inside a four-year job — and the tooltip names both.
 
 ### The CSV format
 
@@ -121,9 +139,26 @@ Wedding day,2019-05-18,,#a63d2f,Marriage
 Trip to Japan,2022-04-02,2022-04-16,,Plane
 ```
 
+### Sharing
+
+**Share** creates a link that contains the whole calendar in the part after
+`#`, which browsers never send to a server. Nothing is uploaded anywhere.
+
+- **Plain links** are compressed and URL-safe, short enough to paste into a
+  chat. They are *encoded, not encrypted*: anyone who has the link can read
+  your name, birth date and milestones, and the app says so.
+- **Protected links** are encrypted with AES-GCM under a key derived from a
+  passphrase (PBKDF2-SHA-256, 600,000 iterations, random salt per link). Send
+  the passphrase separately. Without it the link cannot be opened, and a lost
+  passphrase cannot be recovered.
+
+Opening a link shows the calendar read-only and saves nothing. **Save a copy
+as mine** keeps it, and asks first if that would replace your own calendar.
+
 ### Exporting and printing
 
-**Save as image** produces a PNG for sharing or an SVG for print. The SVG is
+**Export** produces a PNG for sharing, an SVG for print, or an `.ics` file of
+your milestones as all-day calendar events. The SVG is
 generated from the week data rather than screenshotted, so it is a true vector
 — a few hundred KB that scales to a wall poster without softening.
 
@@ -150,6 +185,8 @@ src/
     ├── dateCalculations.ts  # Birth-relative week maths
     ├── csv.ts               # CSV parse + per-row validation
     ├── gridNavigation.ts    # Keyboard movement rules for the grid
+    ├── ics.ts               # Milestones as RFC 5545 iCalendar
+    ├── shareLink.ts         # Share-link encoding and encryption
     ├── icons.ts             # Milestone icon catalogue + name lookup
     ├── posterExport.ts      # Poster as SVG, and SVG rasterised to PNG
     ├── printStyles.ts       # Per-paper-size @media print rules
@@ -174,6 +211,7 @@ the default palette — if you change one, keep the other in sync.
 | `npm run typecheck` | TypeScript, no emit                           |
 | `npm test`          | Vitest, once                                  |
 | `npm run test:watch`| Vitest, watch mode                            |
+| `npm run test:e2e`  | Playwright, against the built `out/` — build first |
 
 ## Deploying
 
@@ -197,8 +235,7 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
 conventions, and what makes a PR easy to merge. Everyone taking part is
 expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Good places to start: more icons, additional theme presets, and further export
-formats such as ICS.
+Good places to start: more icons, additional theme presets, and translations.
 
 To report a security issue, please follow [SECURITY.md](SECURITY.md) rather
 than opening a public issue.

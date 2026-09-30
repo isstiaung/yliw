@@ -11,9 +11,17 @@ of the usual attack surface, but it also means a few things worth knowing:
   profile (an extension, another user on the same OS account, devtools) can
   read it. Use **Export JSON** if you want a backup you control.
 - **Exported JSON and CSV files are plain text.** They are not encrypted.
-- Vulnerabilities we care about are things like stored XSS via imported CSV or
-  JSON, prototype pollution in the import path, or a dependency advisory that
-  is actually reachable from this app.
+- **Plain share links are readable by anyone who has them.** They are
+  encoded, not encrypted. Protected links are encrypted with AES-GCM under a
+  passphrase-derived key (PBKDF2-SHA-256, 600,000 iterations); their strength
+  is the strength of the passphrase.
+- **Opening a share link is treated as untrusted input.** Its contents go
+  through the same validation as a JSON import, and decompression stops at
+  256KB so a small link cannot expand into a huge payload.
+- Vulnerabilities we care about are things like script injection via imported
+  CSV or JSON, a crafted share link, or an exported SVG; prototype pollution in
+  the import path; weaknesses in how protected links are encrypted; or a
+  dependency advisory that is actually reachable from this app.
 
 ## Supported versions
 

@@ -66,7 +66,7 @@ export default function ExportControls({ userData, weekData, className = '' }: E
           title={userData.events.length === 0 ? 'Add a milestone first' : undefined}
         >
           <FaCalendarAlt className="w-3.5 h-3.5" />
-          Milestones as calendar (.ics)
+          Download ICS
         </button>
       </div>
 

@@ -37,7 +37,7 @@ test.describe('exports', () => {
   });
 
   test('ICS holds every milestone as an all-day event', async ({ calendar: page }) => {
-    const { name, bytes } = await download(page, /calendar \(\.ics\)/);
+    const { name, bytes } = await download(page, /Download ICS/);
     const ics = bytes.toString('utf8');
     expect(name).toBe('alex-rivera-in-weeks.ics');
     expect(ics.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true);
