@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces, Caveat } from "next/font/google";
 import "./globals.css";
 import { LifeDataProvider } from "@/contexts/LifeDataContext";
 import { themeInitScript } from "@/utils/themes";
+import ServiceWorker from "@/components/ServiceWorker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,12 @@ const caveat = Caveat({
 export const metadata: Metadata = {
   title: "Your Life In Weeks",
   description: "Visualize your life as a calendar of weeks with important events and milestones",
+  applicationName: "Your Life In Weeks",
+  appleWebApp: { capable: true, title: "Life in Weeks", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f7f0e1",
 };
 
 export default function RootLayout({
@@ -45,6 +52,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${caveat.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <ServiceWorker />
         <LifeDataProvider>
           {children}
         </LifeDataProvider>

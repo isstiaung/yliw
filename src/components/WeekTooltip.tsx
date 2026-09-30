@@ -33,11 +33,11 @@ export default function WeekTooltip({ target }: { target: TooltipTarget | null }
       <div className="text-center">
         <div className="font-medium">Week {week.weekNumber}</div>
         <div className="text-[var(--paper)]/60">Age {age}</div>
-        {week.event && (
-          <div className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>
-            {week.event.title}
+        {week.events.map(event => (
+          <div key={event.id} className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>
+            {event.title}
           </div>
-        )}
+        ))}
       </div>
       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--ink)]" />
     </div>

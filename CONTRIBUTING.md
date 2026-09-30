@@ -25,11 +25,15 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npx playwright install chromium   # once
+npm run test:e2e                  # after the build: it tests out/
 ```
 
-All four must pass. The tests cover the pure logic in `src/utils/` — dates,
+All must pass. The tests cover the pure logic in `src/utils/` — dates,
 CSV parsing and storage. If you change any of those, add a case; if you add a
-new pure module, it belongs under test too.
+new pure module, it belongs under test too. User-facing behaviour belongs in
+`e2e/` — the Playwright suite pins "today" to 30 September 2026, so expected
+values stay stable.
 
 ## What makes a good contribution
 
@@ -40,7 +44,7 @@ new pure module, it belongs under test too.
 - Accessibility improvements to the forms and controls
 - Print and layout fixes for edge cases (very long names, 100-year spans,
   dozens of overlapping events)
-- Further export formats, such as ICS
+- Translations
 - Documentation, including a real screenshot for the README
 
 **Please open an issue first if you're planning to**

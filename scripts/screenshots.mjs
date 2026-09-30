@@ -1,20 +1,16 @@
 /**
  * Regenerates the README screenshots in docs/screenshots/.
  *
- * Playwright is not a project dependency — it is a ~100MB browser download
- * that only matters when the UI changes enough to make the images stale. Set
- * it up once, then run:
- *
- *   npm install --no-save playwright && npx playwright install chromium
+ *   npx playwright install chromium   # once
  *   npm run build
- *   npx serve out -l 4173          # or: python3 -m http.server 4173 -d out
+ *   node e2e/serve.mjs &              # serves out/ on :4173
  *   node scripts/screenshots.mjs
  *
  * It shoots the static export rather than the dev server so the Next.js dev
  * indicator stays out of the images.
  */
 
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.YLIW_BASE ?? 'http://127.0.0.1:4173';

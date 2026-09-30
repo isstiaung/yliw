@@ -64,7 +64,7 @@ function WeekBox({ weekData, className = '' }: WeekBoxProps) {
         weekData.weekNumber,
         getAgeFromWeek(weekData.weekNumber),
         isCurrent ? 'current' : isPast ? 'past' : 'future',
-        event?.title
+        weekData.events.map(e => e.title)
       )}
       style={{
         '--bg-color': backgroundColor,

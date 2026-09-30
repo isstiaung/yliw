@@ -78,6 +78,13 @@ export function importUserData(jsonString: string): UserData | null {
   }
 }
 
+/**
+ * Colours end up in style attributes and, via the SVG export, in raw markup,
+ * so anything other than a hex colour is replaced. CSV import already
+ * enforced this; JSON import and share links did not.
+ */
+const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
 function isValidDate(date: Date): boolean {
   return !Number.isNaN(date.getTime());
 }
@@ -88,7 +95,7 @@ function isValidDate(date: Date): boolean {
  * checked, missing ids regenerated, and week numbers recomputed from the
  * dates rather than read from the file.
  */
-function deserializeUserData(data: unknown): UserData | null {
+export function deserializeUserData(data: unknown): UserData | null {
   if (typeof data !== 'object' || data === null) return null;
   const raw = data as Partial<SerializedUserData>;
 
@@ -120,7 +127,7 @@ function deserializeUserData(data: unknown): UserData | null {
       title: e.title,
       startDate,
       endDate,
-      color: typeof e.color === 'string' ? e.color : '#b4471f',
+      color: typeof e.color === 'string' && HEX_COLOR.test(e.color) ? e.color : '#b4471f',
       icon: typeof e.icon === 'string' ? e.icon : 'Star',
       startWeekNumber: weekRange.startWeek,
       endWeekNumber: weekRange.endWeek,

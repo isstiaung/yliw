@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { LifeEvent } from '@/types';
 import { mapDateRangeToWeeks, parseLocalDate, formatDateForInput } from '@/utils/dateCalculations';
@@ -61,6 +61,15 @@ export default function EventForm() {
     setEditingEvent(event);
     setIsFormOpen(true);
   };
+
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // The dialog mounts when the form opens; showModal() is what makes it modal
+  // (focus trap, inert background, Escape to close). Closing unmounts it.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (isFormOpen && dialog && !dialog.open) dialog.showModal();
+  }, [isFormOpen]);
 
   const closeForm = () => {
     setIsFormOpen(false);
@@ -293,19 +302,28 @@ export default function EventForm() {
         </div>
       </div>
 
-      {/* Event Form Modal */}
+      {/* Event Form Modal — a native <dialog>, opened with showModal(), so
+          Escape, a real focus trap, an inert background and dialog semantics
+          all come from the browser instead of being hand-rolled. */}
       {isFormOpen && (
-        <div
-          className="modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-          onClick={closeForm}
+        // Click-outside-to-close is a mouse convenience; its keyboard
+        // equivalent is Escape, which a modal <dialog> handles natively. The
+        // rules below can't see that, so they are disabled for this element only.
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+        <dialog
+          ref={dialogRef}
+          aria-labelledby="milestone-dialog-title"
+          onClose={closeForm}
+          // Clicks on the backdrop target the dialog itself; the panel's
+          // padding lives on the inner div so its content never does.
+          onClick={e => {
+            if (e.target === e.currentTarget) closeForm();
+          }}
+          className="modal-panel card bg-[var(--surface)] text-[var(--ink)] rounded-xl shadow-[var(--shadow-card-lg)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0 m-auto border-0 backdrop:bg-black/40 backdrop:backdrop-blur-sm"
         >
-          <div
-            className="modal-panel card bg-[var(--surface)] rounded-xl shadow-[var(--shadow-card-lg)] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
             <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-display text-2xl text-[var(--ink)]">
+                <h2 id="milestone-dialog-title" className="font-display text-2xl text-[var(--ink)]">
                   {editingEvent ? 'Edit milestone' : 'New milestone'}
                 </h2>
                 <button
@@ -370,10 +388,10 @@ export default function EventForm() {
                   For a single-day event, use the same date for both.
                 </p>
 
-                <div>
-                  <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+                <fieldset>
+                  <legend className="block text-sm font-medium text-[var(--ink)] mb-2">
                     Colour
-                  </label>
+                  </legend>
                   <div className="flex flex-wrap gap-2">
                     {eventColors.map(color => (
                       <button
@@ -387,10 +405,11 @@ export default function EventForm() {
                         }`}
                         style={{ backgroundColor: color }}
                         aria-label={`Colour ${color}`}
+                        aria-pressed={formData.color === color}
                       />
                     ))}
                   </div>
-                </div>
+                </fieldset>
 
                 <div>
                   <IconPicker
@@ -441,8 +460,7 @@ export default function EventForm() {
                 </div>
               </form>
             </div>
-          </div>
-        </div>
+        </dialog>
       )}
     </div>
   );
