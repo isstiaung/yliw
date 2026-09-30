@@ -143,7 +143,6 @@ export default function SharedCalendar() {
             <input
               id="passphrase"
               type="password"
-              autoFocus
               autoComplete="off"
               value={passphrase}
               onChange={e => setPassphrase(e.target.value)}
