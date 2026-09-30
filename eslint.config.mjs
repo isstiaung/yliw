@@ -11,6 +11,12 @@ const eslintConfig = [
   },
   ...coreWebVitals,
   ...typescript,
+  // Playwright fixtures receive a callback named `use`, which the React hooks
+  // rule mistakes for a hook. Nothing under e2e/ is React.
+  {
+    files: ['e2e/**'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
 ];
 
 export default eslintConfig;

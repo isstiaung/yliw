@@ -49,6 +49,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      # End-to-end tests run against the export just built, served the way
+      # production serves it. Only Chromium: the suite checks behaviour, not
+      # browser quirks, and each extra browser adds a download to every run.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
       - name: Upload static export
         uses: actions/upload-artifact@v7
         with:
