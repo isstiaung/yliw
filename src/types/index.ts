@@ -23,7 +23,10 @@ export interface WeekData {
   weekInYear: number;
   isPast: boolean;
   isCurrent: boolean;
+  /** The event that owns the square: the shortest one covering this week. */
   event?: LifeEvent;
+  /** Every event covering this week, owner first. */
+  events: LifeEvent[];
 }
 
 export type PrintSize = 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5';

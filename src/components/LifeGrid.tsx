@@ -9,15 +9,29 @@ import { nextWeekForKey, WEEKS_PER_ROW } from '@/utils/gridNavigation';
 import PrintControls from './PrintControls';
 import ExportControls from './ExportControls';
 import DataControls from './DataControls';
+import ShareControls from './ShareControls';
 import ThemeControls from './ThemeControls';
 import Logo from './Logo';
 import { FaArrowLeft, FaEdit, FaRedo } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import { UserData } from '@/types';
 
-export default function LifeGrid() {
+interface LifeGridProps {
+  /**
+   * Render someone else's calendar read-only, from a share link, instead of
+   * the one in local storage. Editing, sharing and data controls are hidden,
+   * and nothing is written to storage.
+   */
+  sharedData?: UserData;
+  /** Shown in place of the navigation when viewing a shared calendar. */
+  banner?: React.ReactNode;
+}
+
+export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
   const { state, clearData } = useLifeData();
   const router = useRouter();
-  const userData = state.userData;
+  const readOnly = sharedData !== undefined;
+  const userData = sharedData ?? state.userData;
 
   // Up to ~4,700 cells — only regenerate when the underlying data changes
   const weekData = useMemo(
@@ -161,6 +175,13 @@ export default function LifeGrid() {
       <div className="bg-[var(--surface)]/80 backdrop-blur border-b border-[var(--line)] print-hide">
         <div className="max-w-7xl mx-auto px-4 py-3.5">
           <div className="flex items-center justify-between">
+            {readOnly ? (
+              <div className="flex items-center gap-4 min-w-0">
+                <Logo className="h-5 w-5 flex-shrink-0" />
+                <div className="h-5 w-px bg-[var(--line)]" />
+                {banner}
+              </div>
+            ) : (
             <div className="flex items-center gap-4">
               <Logo className="h-5 w-5" />
               <div className="h-5 w-px bg-[var(--line)]" />
@@ -180,6 +201,7 @@ export default function LifeGrid() {
                 Start over
               </button>
             </div>
+            )}
             <div className="text-xs font-mono text-[var(--muted)]">
               {userData.events.length} milestone{userData.events.length === 1 ? '' : 's'} · {weekData.length.toLocaleString()} weeks
             </div>
@@ -380,7 +402,8 @@ export default function LifeGrid() {
               <ThemeControls />
               <PrintControls />
               <ExportControls userData={userData} weekData={weekData} />
-              <DataControls />
+              {!readOnly && <ShareControls userData={userData} />}
+              {!readOnly && <DataControls />}
 
               {userData.events.length > 0 && (
                 <div className="card bg-[var(--surface)] border border-[var(--line)] rounded-lg p-5">
@@ -388,13 +411,15 @@ export default function LifeGrid() {
                     <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-[var(--muted)]">
                       Recent milestones
                     </h3>
-                    <button
-                      onClick={goBackToEvents}
-                      className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
-                      title="Edit milestones"
-                    >
-                      <FaEdit className="w-3.5 h-3.5" />
-                    </button>
+                    {!readOnly && (
+                      <button
+                        onClick={goBackToEvents}
+                        className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
+                        title="Edit milestones"
+                      >
+                        <FaEdit className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-3">
                     {userData.events

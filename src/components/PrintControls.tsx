@@ -36,15 +36,16 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
         Print
       </h3>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+      <fieldset className="mb-4">
+        <legend className="block text-sm font-medium text-[var(--ink)] mb-2">
           Paper size
-        </label>
+        </legend>
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(printConfigs).map(([size, config]) => (
             <button
               key={size}
               onClick={() => handleSizeChange(size as PrintSize)}
+              aria-pressed={selectedSize === size}
               className={`p-2.5 text-sm border rounded-md transition-colors ${
                 selectedSize === size
                   ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
@@ -58,7 +59,7 @@ export default function PrintControls({ className = '' }: PrintControlsProps) {
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <button
         onClick={handlePrint}

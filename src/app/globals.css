@@ -215,7 +215,7 @@ body {
   }
 }
 
-.modal-overlay {
+.modal-panel::backdrop {
   animation: fade-in 0.2s ease-out both;
 }
 
@@ -252,7 +252,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
-  .modal-overlay,
+  .modal-panel::backdrop,
   .modal-panel,
   .loader-week {
     animation: none;
