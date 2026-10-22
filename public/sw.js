@@ -16,9 +16,13 @@
  * come back broken. Share links are fine offline too: the calendar is
  * in the URL fragment, which never reaches the network or this cache key.
  *
- * Bump CACHE to drop everything from an older version on activate.
+ * Each build gets its own cache: scripts/sw-version.mjs stamps CACHE with a
+ * hash of the export after `next build`. That changes this file's bytes, so
+ * browsers install the new worker, and activate drops every older cache —
+ * otherwise each deploy's hashed chunks would pile up in one cache forever.
+ * Unstamped (a build that skipped the script), it is one fixed cache.
  */
-const CACHE = 'yliw-v1';
+const CACHE = 'yliw-dev';
 const SHELL = ['/', '/calendar', '/view', '/manifest.webmanifest', '/icons/icon-192.png'];
 
 const ASSET = /\/_next\/static\/[^"'\s)\\]+/g;
