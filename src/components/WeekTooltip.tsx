@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { WeekData } from '@/types';
-import { getAgeFromWeek } from '@/utils/dateCalculations';
+import { formatWeekRange, getAgeFromWeek } from '@/utils/dateCalculations';
 
 export interface TooltipTarget {
   week: WeekData;
@@ -18,7 +18,7 @@ export interface TooltipTarget {
  * squares the per-box version was about 80% of the page's DOM nodes to display
  * one card at a time.
  */
-export default function WeekTooltip({ target }: { target: TooltipTarget | null }) {
+export default function WeekTooltip({ target, birthDate }: { target: TooltipTarget | null; birthDate: Date }) {
   if (!target) return null;
 
   const { week, x, y } = target;
@@ -32,6 +32,7 @@ export default function WeekTooltip({ target }: { target: TooltipTarget | null }
     >
       <div className="text-center">
         <div className="font-medium">Week {week.weekNumber}</div>
+        <div className="text-[var(--paper)]/60">{formatWeekRange(birthDate, week.weekNumber)}</div>
         <div className="text-[var(--paper)]/60">Age {age}</div>
         {week.events.map(event => (
           <div key={event.id} className="font-medium mt-1" style={{ color: 'var(--tooltip-event)' }}>

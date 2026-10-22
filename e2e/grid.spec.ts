@@ -43,6 +43,24 @@ test.describe('the week grid', () => {
     await page.mouse.move(2, 2);
     await expect(tooltip).toHaveCount(0);
   });
+
+  test('names the days the week covers', async ({ calendar: page }) => {
+    // Week 1,873 is the first of age 36: 12–18 March 2026.
+    await page.locator('#week-1873').hover();
+    const expected = await page.evaluate(() =>
+      new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+        .formatRange(new Date(2026, 2, 12), new Date(2026, 2, 18)));
+    await expect(page.getByRole('tooltip')).toContainText(expected);
+  });
+
+  test('labels each row with the age the tooltip gives its weeks', async ({ calendar: page }) => {
+    const label = page.locator('.life-grid .font-mono').filter({ hasText: /^35$/ });
+    const cell = page.locator(`#week-${35 * 52 + 1}`);
+    const [labelBox, cellBox] = [await label.boundingBox(), await cell.boundingBox()];
+    expect(Math.abs(labelBox!.y + labelBox!.height / 2 - (cellBox!.y + cellBox!.height / 2))).toBeLessThan(2);
+    await cell.hover();
+    await expect(page.getByRole('tooltip')).toContainText('Age 35');
+  });
 });
 
 test.describe('keyboard navigation', () => {
@@ -101,6 +119,16 @@ test.describe('layout', () => {
       expect(overflow).toEqual({ page: false, grid: false });
     });
   }
+
+  test('Ctrl/Cmd+P prints just the poster, without pressing Print', async ({ calendar: page }) => {
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByRole('heading', { name: 'Appearance' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Start over' })).toBeHidden();
+    await expect(page.getByRole('grid')).toBeVisible();
+    const size = await page.evaluate(() =>
+      getComputedStyle(document.querySelector('.life-grid')!).getPropertyValue('--week-size').trim());
+    expect(size).toBe('7px'); // A4, the default
+  });
 
   test('print styles override screen sizing per paper size', async ({ calendar: page }) => {
     await page.evaluate(() => { window.print = () => {}; });

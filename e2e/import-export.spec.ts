@@ -25,10 +25,15 @@ test.describe('exports', () => {
     expect(name).toBe('alex-rivera-in-weeks.svg');
     const parsed = await page.evaluate(text => {
       const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
-      return { error: !!doc.querySelector('parsererror'), rects: doc.querySelectorAll('rect').length };
+      return {
+        error: !!doc.querySelector('parsererror'),
+        rects: doc.querySelectorAll('rect').length,
+        icons: doc.querySelectorAll('use').length,
+      };
     }, bytes.toString('utf8'));
     expect(parsed.error).toBe(false);
     expect(parsed.rects).toBeGreaterThanOrEqual(4680);
+    expect(parsed.icons).toBeGreaterThan(0); // milestone icons, as on screen
   });
 
   test('PNG is a real PNG', async ({ calendar: page }) => {

@@ -20,7 +20,7 @@ interface EventFormData {
 }
 
 export default function EventForm() {
-  const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
+  const { state, addEvent, updateEvent, deleteEvent, setPhase } = useLifeData();
   const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
@@ -63,6 +63,10 @@ export default function EventForm() {
   };
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // A click's target is the nearest element containing both the press and the
+  // release, so selecting text in a field and letting go over the backdrop
+  // "clicks" the dialog itself. Only a press that started on the backdrop counts.
+  const pressedBackdrop = useRef(false);
 
   // The dialog mounts when the form opens; showModal() is what makes it modal
   // (focus trap, inert background, Escape to close). Closing unmounts it.
@@ -202,7 +206,13 @@ export default function EventForm() {
               {state.userData.name}&apos;s milestones
             </h1>
             <p className="text-[var(--muted)]">
-              Mark the chapters and moments that shape your weeks.
+              Mark the chapters and moments that shape your weeks.{' '}
+              <button
+                onClick={() => setPhase('setup')}
+                className="text-[var(--accent)] hover:underline whitespace-nowrap"
+              >
+                Edit your details
+              </button>
             </p>
           </div>
 
@@ -316,8 +326,11 @@ export default function EventForm() {
           onClose={closeForm}
           // Clicks on the backdrop target the dialog itself; the panel's
           // padding lives on the inner div so its content never does.
+          onPointerDown={e => {
+            pressedBackdrop.current = e.target === e.currentTarget;
+          }}
           onClick={e => {
-            if (e.target === e.currentTarget) closeForm();
+            if (pressedBackdrop.current && e.target === e.currentTarget) closeForm();
           }}
           className="modal-panel card bg-[var(--surface)] text-[var(--ink)] rounded-xl shadow-[var(--shadow-card-lg)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0 m-auto border-0 backdrop:bg-black/40 backdrop:backdrop-blur-sm"
         >

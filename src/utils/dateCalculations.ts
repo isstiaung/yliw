@@ -27,6 +27,20 @@ export function parseLocalDate(value: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/**
+ * Parse `YYYY-MM-DD` as a local date, or null if it is not one. Unlike
+ * parseLocalDate this rejects dates that roll over, such as 2020-02-31.
+ */
+export function parseStrictDate(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = parseLocalDate(value);
+  const [year, month, day] = value.split('-').map(Number);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  return date;
+}
+
 /** Format a Date as `YYYY-MM-DD` using local parts (inverse of parseLocalDate). */
 export function formatDateForInput(date: Date): string {
   const year = date.getFullYear();
@@ -79,6 +93,17 @@ export function getWeekEndDate(birthDate: Date, weekNumber: number): Date {
   return addDays(getWeekDate(birthDate, weekNumber + 1), -1);
 }
 
+const weekRangeFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+/**
+ * The days a cell covers, in the viewer's locale: "12–18 May 2003",
+ * "May 12 – 18, 2003", and so on. Formatted on demand for the one week being
+ * looked at — across all 4,680 it costs tens of milliseconds.
+ */
+export function formatWeekRange(birthDate: Date, weekNumber: number): string {
+  return weekRangeFormat.formatRange(getWeekDate(birthDate, weekNumber), getWeekEndDate(birthDate, weekNumber));
+}
+
 export function mapDateToWeek(birthDate: Date, eventDate: Date): number {
   return calculateWeekNumber(birthDate, eventDate);
 }
@@ -97,6 +122,46 @@ export function mapDateRangeToWeeks(
 /** Age in completed years during a given week: weeks 1–52 are age 0, 53–104 age 1, … */
 export function getAgeFromWeek(weekNumber: number): number {
   return Math.floor((weekNumber - 1) / WEEKS_PER_YEAR);
+}
+
+/**
+ * Whether a row carries an age label. Row n is age n, the same age the tooltip
+ * and screen reader give for its weeks, so the row labelled 35 is the year
+ * from the 35th birthday to the 36th. The grid and the poster both use this.
+ */
+export const isLabelledAge = (age: number): boolean => age > 0 && age % 5 === 0;
+
+/**
+ * Events that will not fit on a calendar with this birth date and length,
+ * wholly or in part. Used to warn before changing either one.
+ */
+export function eventsOffCalendar(birthDate: Date, endAge: number, events: LifeEvent[]): LifeEvent[] {
+  const totalWeeks = calculateTotalWeeks(endAge);
+  return events.filter(event => {
+    const { startWeek, endWeek } = mapDateRangeToWeeks(birthDate, event.startDate, event.endDate);
+    return startWeek < 1 || endWeek > totalWeeks;
+  });
+}
+
+export interface LifeStats {
+  lived: number;
+  remaining: number;
+  percentLived: number;
+}
+
+/**
+ * The stats under the grid. The app and the poster both show these, and
+ * defining them once keeps the two from disagreeing: the current week counts
+ * as neither lived nor remaining.
+ */
+export function summarizeWeeks(weeks: WeekData[]): LifeStats {
+  const lived = weeks.filter(w => w.isPast).length;
+  const remaining = weeks.filter(w => !w.isPast && !w.isCurrent).length;
+  return {
+    lived,
+    remaining,
+    percentLived: weeks.length ? Math.round((lived / weeks.length) * 100) : 0,
+  };
 }
 
 export function generateWeekData(

@@ -1,5 +1,5 @@
 import { UserData } from '@/types';
-import { formatDateForInput, parseLocalDate } from './dateCalculations';
+import { formatDateForInput } from './dateCalculations';
 import { deserializeUserData } from './localStorage';
 
 /**
@@ -116,6 +116,33 @@ export function toPayload(user: UserData): SharePayload {
   };
 }
 
+/** FNV-1a, 32-bit: a short, stable id derived from content. Not for security. */
+function contentHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+/**
+ * Links carry no ids, so they are derived here. They end up as ICS UIDs, and
+ * an index (`shared-0`, `shared-1`, …) would be the same for everyone's
+ * calendar: importing a second person's milestones would overwrite the first.
+ * Hashing the owner and the milestone keeps ids distinct between calendars and
+ * stable across re-shares of the same one, so a re-import updates in place.
+ */
+function sharedEventIds(owner: string, events: unknown[][]): string[] {
+  const seen = new Map<string, number>();
+  return events.map(([title, start, end]) => {
+    const id = `shared-${contentHash([owner, title, start, end].map(String).join('\u0000'))}`;
+    const count = seen.get(id) ?? 0;
+    seen.set(id, count + 1);
+    return count === 0 ? id : `${id}-${count}`;
+  });
+}
+
 /**
  * Back to UserData through the same validator as JSON import, so a link can
  * never carry anything an imported file could not: dates are checked, colours
@@ -129,18 +156,19 @@ export function fromPayload(raw: unknown): UserData {
   if (typeof p.b !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.b) || !Array.isArray(p.e)) {
     throw new ShareLinkError('This link is damaged.');
   }
-  const iso = (value: unknown) =>
-    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseLocalDate(value).toISOString() : 'invalid';
+  // Links only ever carry calendar days; anything else is damage.
+  const day = (value: unknown) =>
+    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : 'invalid';
 
+  const rows = p.e.map(ev => (Array.isArray(ev) ? ev : null));
+  const ids = sharedEventIds(`${p.n}\u0000${p.b}`, rows.map(ev => ev ?? []));
   const user = deserializeUserData({
     name: p.n,
-    birthDate: iso(p.b),
+    birthDate: day(p.b),
     endAge: p.a,
     quote: typeof p.q === 'string' ? p.q : '',
-    events: p.e.map((ev, i) =>
-      Array.isArray(ev)
-        ? { id: `shared-${i}`, title: ev[0], startDate: iso(ev[1]), endDate: iso(ev[2]), color: ev[3], icon: ev[4] }
-        : null
+    events: rows.map((ev, i) =>
+      ev ? { id: ids[i], title: ev[0], startDate: day(ev[1]), endDate: day(ev[2]), color: ev[3], icon: ev[4] } : null
     ),
   });
   if (!user) throw new ShareLinkError('This link is damaged.');

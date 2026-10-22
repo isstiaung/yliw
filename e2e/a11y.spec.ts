@@ -38,6 +38,18 @@ test.describe('milestone dialog', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
+  test('stays open when a text selection ends over the backdrop', async ({ page }) => {
+    const title = page.getByRole('dialog').getByLabel(/title/i).first();
+    await title.fill('University');
+    const box = (await title.boundingBox())!;
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(5, 5, { steps: 5 });
+    await page.mouse.up();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(title).toHaveValue('University');
+  });
+
   test('names the colour group and reports the selected swatch', async ({ page }) => {
     const group = page.getByRole('group', { name: 'Colour' });
     await expect(group).toBeVisible();

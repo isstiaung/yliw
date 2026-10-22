@@ -102,7 +102,8 @@ The app moves through three phases, held in a single reducer
 (`src/contexts/LifeDataContext.tsx`):
 
 1. **Setup** — your name, birth date, how many years to draw, and an optional
-   quote for the footer.
+   quote for the footer. **Edit your details** on the milestones page brings
+   it back later without touching your milestones.
 2. **Events** — add milestones by hand, or upload a CSV. Dates are validated
    against your birth date and chosen end age.
 3. **Calendar** — the grid itself, at `/calendar`, with the print panel.
@@ -119,6 +120,12 @@ simpler approach, a flat 52 weeks counted from birth, drifts about a day and a
 quarter per row: by row 90 the "age 89" row would start roughly three months
 late. People born on 29 February get their birthday on 28 February in common
 years. The rules live in `src/utils/dateCalculations.ts`.
+
+Row *n* is age *n*, so the row labelled 35 runs from your 35th birthday to the
+day before your 36th — the same age the tooltip gives each of its weeks, along
+with the exact days the week covers. Dates are stored as calendar days
+(`YYYY-MM-DD`), so they stay put when you travel or open an export in another
+timezone.
 
 Where milestones overlap, the **shorter one** takes the square — a one-week
 wedding stays visible inside a four-year job — and the tooltip names both.
@@ -160,7 +167,9 @@ as mine** keeps it, and asks first if that would replace your own calendar.
 **Export** produces a PNG for sharing, an SVG for print, or an `.ics` file of
 your milestones as all-day calendar events. The SVG is
 generated from the week data rather than screenshotted, so it is a true vector
-— a few hundred KB that scales to a wall poster without softening.
+— a few hundred KB that scales to a wall poster without softening. It carries
+the milestone icons too, and long names, titles and quotes are fitted to the
+sheet rather than running off the edge.
 
 For paper, pick a size in the print panel and hit print. Two things matter for a good
 result: enable **Background graphics** in the browser print dialog, or every
@@ -205,7 +214,7 @@ the default palette — if you change one, keep the other in sync.
 | Command             | What it does                                  |
 | ------------------- | --------------------------------------------- |
 | `npm run dev`       | Dev server at <http://localhost:3000>         |
-| `npm run build`     | Static export to `out/`                       |
+| `npm run build`     | Static export to `out/`, then stamp the service worker |
 | `npm run start`     | Serve a production build                      |
 | `npm run lint`      | ESLint                                        |
 | `npm run typecheck` | TypeScript, no emit                           |
@@ -221,6 +230,11 @@ The app is configured for [static export](https://nextjs.org/docs/app/guides/sta
 on any static host — Cloudflare Pages or Workers, Netlify, Vercel, GitHub
 Pages, or an S3 bucket. There is nothing to configure and no environment
 variables to set.
+
+Build with `npm run build` rather than `next build` directly: the `postbuild`
+step (`scripts/sw-version.mjs`) gives each build's service worker its own
+cache, which is how returning visitors drop the previous deploy's files. A
+build without it still works offline, but old files are never cleaned up.
 
 ## Built with
 

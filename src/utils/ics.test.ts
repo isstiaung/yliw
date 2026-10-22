@@ -53,13 +53,18 @@ describe('buildIcs', () => {
   });
 
   it('names the calendar, escaped', () => {
-    expect(ics([], 'Alex, Sam; & co')).toContain('X-WR-CALNAME:Alex\\, Sam\; & co');
+    expect(ics([], 'Alex, Sam; & co')).toContain('X-WR-CALNAME:Alex\\, Sam\\; & co');
   });
 });
 
 describe('escapeText', () => {
   it('escapes the four characters RFC 5545 reserves', () => {
-    expect(escapeText('a,b;c\\d\ne')).toBe('a\\,b\;c\\\\d\\ne');
+    expect(escapeText('a,b;c\\d\ne')).toBe('a\\,b\\;c\\\\d\\ne');
+  });
+  it('escapes a semicolon as backslash-semicolon', () => {
+    // '\;' in a JS string is just ';' — the bug this guards against.
+    expect(escapeText('a;b')).toBe('a\\;b');
+    expect(escapeText('a;b')).toHaveLength(4);
   });
   it('escapes backslashes first so they are not doubled twice', () => {
     expect(escapeText('\\,')).toBe('\\\\\\,');
