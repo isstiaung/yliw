@@ -27,6 +27,20 @@ export function parseLocalDate(value: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/**
+ * Parse `YYYY-MM-DD` as a local date, or null if it is not one. Unlike
+ * parseLocalDate this rejects dates that roll over, such as 2020-02-31.
+ */
+export function parseStrictDate(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = parseLocalDate(value);
+  const [year, month, day] = value.split('-').map(Number);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  return date;
+}
+
 /** Format a Date as `YYYY-MM-DD` using local parts (inverse of parseLocalDate). */
 export function formatDateForInput(date: Date): string {
   const year = date.getFullYear();

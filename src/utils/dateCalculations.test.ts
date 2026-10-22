@@ -10,6 +10,7 @@ import {
   generateWeekData,
   mapDateRangeToWeeks,
   getAgeFromWeek,
+  parseStrictDate,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
 
@@ -238,5 +239,15 @@ describe('generateWeekData', () => {
     expect(weeks[52].year).toBe(2);
     expect(weeks[51].weekInYear).toBe(52);
     expect(weeks[52].weekInYear).toBe(1);
+  });
+});
+
+describe('parseStrictDate', () => {
+  it('parses a real day as local midnight', () => {
+    expect(parseStrictDate('2020-02-29')).toEqual(new Date(2020, 1, 29));
+  });
+
+  it.each(['2021-02-29', '2020-13-01', '2020-04-31', '2020-4-1', '2020-04-01T00:00', ''])('rejects %o', value => {
+    expect(parseStrictDate(value)).toBeNull();
   });
 });

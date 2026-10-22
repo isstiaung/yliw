@@ -1,5 +1,5 @@
 import { UserData } from '@/types';
-import { formatDateForInput, parseLocalDate } from './dateCalculations';
+import { formatDateForInput } from './dateCalculations';
 import { deserializeUserData } from './localStorage';
 
 /**
@@ -129,17 +129,18 @@ export function fromPayload(raw: unknown): UserData {
   if (typeof p.b !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.b) || !Array.isArray(p.e)) {
     throw new ShareLinkError('This link is damaged.');
   }
-  const iso = (value: unknown) =>
-    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseLocalDate(value).toISOString() : 'invalid';
+  // Links only ever carry calendar days; anything else is damage.
+  const day = (value: unknown) =>
+    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : 'invalid';
 
   const user = deserializeUserData({
     name: p.n,
-    birthDate: iso(p.b),
+    birthDate: day(p.b),
     endAge: p.a,
     quote: typeof p.q === 'string' ? p.q : '',
     events: p.e.map((ev, i) =>
       Array.isArray(ev)
-        ? { id: `shared-${i}`, title: ev[0], startDate: iso(ev[1]), endDate: iso(ev[2]), color: ev[3], icon: ev[4] }
+        ? { id: `shared-${i}`, title: ev[0], startDate: day(ev[1]), endDate: day(ev[2]), color: ev[3], icon: ev[4] }
         : null
     ),
   });

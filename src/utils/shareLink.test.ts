@@ -136,3 +136,19 @@ describe('hostile or broken links', () => {
     await expect(decodeShareFragment({ kind: 'plain', data })).rejects.toThrow(/different version/);
   });
 });
+
+describe('dates in links', () => {
+  it('are read as the same calendar day in any timezone', async () => {
+    const fragment = await encodeShareFragment(user());
+    const original = process.env.TZ;
+    try {
+      for (const tz of ['Pacific/Honolulu', 'Asia/Tokyo']) {
+        process.env.TZ = tz;
+        const decoded = await decodeShareFragment(parseFragment('#' + fragment)!);
+        expect(formatDateForInput(decoded.birthDate)).toBe('1990-03-12');
+      }
+    } finally {
+      process.env.TZ = original;
+    }
+  });
+});

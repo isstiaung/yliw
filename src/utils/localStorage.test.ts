@@ -190,3 +190,69 @@ describe('colour validation', () => {
     expect(withColor(c)).toBe('#b4471f');
   });
 });
+
+describe('dates are calendar days, whatever the timezone', () => {
+  const originalTz = process.env.TZ;
+  const inTimezone = <T>(tz: string, run: () => T): T => {
+    process.env.TZ = tz;
+    try {
+      return run();
+    } finally {
+      process.env.TZ = originalTz;
+    }
+  };
+  /** Load a stored birth date and read it back as a day, in the current timezone. */
+  const birthOf = (birthDate: string) => {
+    localStorage.setItem('yliw-user-data', JSON.stringify({ name: 'A', birthDate, endAge: 90 }));
+    return formatDateForInput(loadUserData()!.birthDate);
+  };
+
+  it('stores YYYY-MM-DD rather than a UTC instant', () => {
+    saveUserData(sample());
+    const raw = JSON.parse(localStorage.getItem('yliw-user-data')!);
+    expect(raw.birthDate).toBe('1990-03-12');
+    expect(raw.events[0]).toMatchObject({ startDate: '2008-09-15', endDate: '2012-06-10' });
+  });
+
+  it('exports YYYY-MM-DD too', () => {
+    saveUserData(sample());
+    expect(JSON.parse(exportUserData()).birthDate).toBe('1990-03-12');
+  });
+
+  it('reads a hand-edited YYYY-MM-DD as that day, even west of UTC', () => {
+    inTimezone('America/New_York', () => {
+      expect(birthOf('1990-05-10')).toBe('1990-05-10');
+    });
+  });
+
+  it('rejects a YYYY-MM-DD that does not exist', () => {
+    localStorage.setItem('yliw-user-data', JSON.stringify({ name: 'A', birthDate: '2021-02-29', endAge: 90 }));
+    expect(loadUserData()).toBeNull();
+  });
+
+  // Older versions stored local midnight as a UTC instant. 10 May 1990 written
+  // in Sydney (UTC+10) is 9 May 14:00 UTC; written in New York (UTC−4), 10 May 04:00 UTC.
+  it.each([
+    ['Australia/Sydney', '1990-05-09T14:00:00.000Z', 'Australia/Sydney'],
+    ['Australia/Sydney', '1990-05-09T14:00:00.000Z', 'America/New_York'],
+    ['America/New_York', '1990-05-10T04:00:00.000Z', 'Australia/Sydney'],
+    ['Asia/Kolkata', '1990-05-09T18:30:00.000Z', 'Europe/London'],
+    ['UTC', '1990-05-10T00:00:00.000Z', 'Pacific/Honolulu'],
+  ])('reads a legacy date written in %s (%s) as the same day in %s', (_writer, instant, reader) => {
+    inTimezone(reader, () => {
+      expect(birthOf(instant)).toBe('1990-05-10');
+    });
+  });
+
+  it('round-trips an export from one timezone into another', () => {
+    const json = inTimezone('Australia/Sydney', () => {
+      saveUserData(sample());
+      return exportUserData();
+    });
+    inTimezone('America/Los_Angeles', () => {
+      const imported = importUserData(json)!;
+      expect(formatDateForInput(imported.birthDate)).toBe('1990-03-12');
+      expect(formatDateForInput(imported.events[0].startDate)).toBe('2008-09-15');
+    });
+  });
+});
