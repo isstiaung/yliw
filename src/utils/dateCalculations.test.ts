@@ -12,6 +12,7 @@ import {
   getAgeFromWeek,
   parseStrictDate,
   isLabelledAge,
+  eventsOffCalendar,
   summarizeWeeks,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
@@ -267,6 +268,25 @@ describe('isLabelledAge', () => {
     expect(isLabelledAge(5)).toBe(true);
     expect(getAgeFromWeek(5 * 52 + 1)).toBe(5);
     expect(getAgeFromWeek(6 * 52)).toBe(5);
+  });
+});
+
+describe('eventsOffCalendar', () => {
+  const birth = '1990-03-12';
+
+  it('is empty when every event fits', () => {
+    expect(eventsOffCalendar(parseLocalDate(birth), 90, [event('2008-09-15', '2012-06-10', birth)])).toEqual([]);
+  });
+
+  it('finds events from before a later birth date', () => {
+    const e = event('2008-09-15', '2012-06-10', birth);
+    expect(eventsOffCalendar(parseLocalDate('2010-01-01'), 90, [e])).toEqual([e]);
+  });
+
+  it('finds events that run past a shorter calendar', () => {
+    const e = event('2008-09-15', '2012-06-10', birth);
+    expect(eventsOffCalendar(parseLocalDate(birth), 20, [e])).toEqual([e]);
+    expect(eventsOffCalendar(parseLocalDate(birth), 23, [e])).toEqual([]);
   });
 });
 

@@ -4,18 +4,24 @@ import React, { useState } from 'react';
 import { differenceInWeeks } from 'date-fns';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { UserData } from '@/types';
-import { parseLocalDate } from '@/utils/dateCalculations';
+import { eventsOffCalendar, formatDateForInput, parseLocalDate } from '@/utils/dateCalculations';
 import WeekStrip from './WeekStrip';
 import Logo from './Logo';
 
+/**
+ * The first step for a new calendar, and the way back to change its details
+ * later. With a calendar already loaded it edits that one in place and keeps
+ * its milestones.
+ */
 export default function SetupForm() {
-  const { setUserData, setPhase } = useLifeData();
-  const [formData, setFormData] = useState({
-    name: '',
-    birthDate: '',
-    endAge: '90',
-    quote: ''
-  });
+  const { state, setUserData, setPhase, updateProfile } = useLifeData();
+  const existing = state.userData;
+  const [formData, setFormData] = useState(() => ({
+    name: existing?.name ?? '',
+    birthDate: existing ? formatDateForInput(existing.birthDate) : '',
+    endAge: String(existing?.endAge ?? 90),
+    quote: existing?.quote ?? '',
+  }));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,15 +73,31 @@ export default function SetupForm() {
       return;
     }
 
-    const userData: UserData = {
+    const profile = {
       name: formData.name.trim(),
       birthDate: parseLocalDate(formData.birthDate),
       endAge: parseInt(formData.endAge, 10),
       quote: formData.quote.trim(),
-      events: []
     };
 
-    setUserData(userData);
+    if (existing) {
+      // Milestones were checked against the old dates; a new birth date or a
+      // shorter span can push some off the grid. Say so rather than hide them.
+      const off = eventsOffCalendar(profile.birthDate, profile.endAge, existing.events).length;
+      if (
+        off > 0 &&
+        !window.confirm(
+          `${off} milestone${off === 1 ? '' : 's'} would fall partly or wholly outside the new calendar ` +
+            'and be cut off or hidden. Save anyway?'
+        )
+      ) {
+        return;
+      }
+      updateProfile(profile);
+    } else {
+      const userData: UserData = { ...profile, events: [] };
+      setUserData(userData);
+    }
     setPhase('events');
   };
 
@@ -109,7 +131,9 @@ export default function SetupForm() {
             Your Life<br />in Weeks
           </h1>
           <p className="text-[var(--muted)]">
-            One small square for every week you will live. Let&apos;s set up your calendar.
+            {existing
+              ? 'Change your details. Your milestones stay as they are.'
+              : <>One small square for every week you will live. Let&apos;s set up your calendar.</>}
           </p>
           <div className="mt-6">
             <WeekStrip fraction={lifeFraction} />
@@ -188,12 +212,23 @@ export default function SetupForm() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-[var(--ink)] text-[var(--paper)] py-3 px-4 rounded-md font-medium tracking-wide hover:bg-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--surface)] transition-colors"
-          >
-            Continue to milestones
-          </button>
+          <div className="flex gap-3">
+            {existing && (
+              <button
+                type="button"
+                onClick={() => setPhase('events')}
+                className="flex-1 py-3 px-4 rounded-md font-medium border border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              className="flex-1 bg-[var(--ink)] text-[var(--paper)] py-3 px-4 rounded-md font-medium tracking-wide hover:bg-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--surface)] transition-colors"
+            >
+              {existing ? 'Save changes' : 'Continue to milestones'}
+            </button>
+          </div>
         </form>
 
         <p className="mt-6 text-xs text-[var(--muted)] text-center">

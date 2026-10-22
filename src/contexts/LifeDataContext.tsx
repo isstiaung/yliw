@@ -5,6 +5,9 @@ import { UserData, LifeEvent, AppPhase } from '@/types';
 import { saveUserData, loadUserData, clearUserData } from '@/utils/localStorage';
 import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
 
+/** Everything the setup form edits: the calendar minus its milestones. */
+export type Profile = Omit<UserData, 'events'>;
+
 interface LifeDataState {
   userData: UserData | null;
   currentPhase: AppPhase;
@@ -16,6 +19,7 @@ type LifeDataAction =
   | { type: 'SET_PHASE'; payload: AppPhase }
   | { type: 'ADD_EVENT'; payload: Omit<LifeEvent, 'id' | 'startWeekNumber' | 'endWeekNumber'> }
   | { type: 'UPDATE_EVENT'; payload: LifeEvent }
+  | { type: 'UPDATE_PROFILE'; payload: Profile }
   | { type: 'DELETE_EVENT'; payload: string }
   | { type: 'LOAD_DATA'; payload: UserData | null }
   | { type: 'SET_LOADING'; payload: boolean }
@@ -76,6 +80,23 @@ function lifeDataReducer(state: LifeDataState, action: LifeDataAction): LifeData
         },
       };
     }
+    case 'UPDATE_PROFILE': {
+      if (!state.userData) return state;
+      const { birthDate } = action.payload;
+
+      // Milestones keep their dates; the week numbers shown beside them are
+      // relative to the birth date, so they move with it.
+      return {
+        ...state,
+        userData: {
+          ...action.payload,
+          events: state.userData.events.map(event => {
+            const weekRange = mapDateRangeToWeeks(birthDate, event.startDate, event.endDate);
+            return { ...event, startWeekNumber: weekRange.startWeek, endWeekNumber: weekRange.endWeek };
+          }),
+        },
+      };
+    }
     case 'DELETE_EVENT': {
       if (!state.userData) return state;
 
@@ -117,6 +138,7 @@ interface LifeDataContextType {
   setPhase: (phase: AppPhase) => void;
   addEvent: (event: Omit<LifeEvent, 'id' | 'startWeekNumber' | 'endWeekNumber'>) => void;
   updateEvent: (event: LifeEvent) => void;
+  updateProfile: (profile: Profile) => void;
   deleteEvent: (eventId: string) => void;
   clearData: () => void;
 }
@@ -155,6 +177,10 @@ export function LifeDataProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'UPDATE_EVENT', payload: event });
   };
 
+  const updateProfile = (profile: Profile) => {
+    dispatch({ type: 'UPDATE_PROFILE', payload: profile });
+  };
+
   const deleteEvent = (eventId: string) => {
     dispatch({ type: 'DELETE_EVENT', payload: eventId });
   };
@@ -174,6 +200,7 @@ export function LifeDataProvider({ children }: { children: ReactNode }) {
         setPhase,
         addEvent,
         updateEvent,
+        updateProfile,
         deleteEvent,
         clearData,
       }}

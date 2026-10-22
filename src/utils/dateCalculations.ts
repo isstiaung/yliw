@@ -120,6 +120,18 @@ export function getAgeFromWeek(weekNumber: number): number {
  */
 export const isLabelledAge = (age: number): boolean => age > 0 && age % 5 === 0;
 
+/**
+ * Events that will not fit on a calendar with this birth date and length,
+ * wholly or in part. Used to warn before changing either one.
+ */
+export function eventsOffCalendar(birthDate: Date, endAge: number, events: LifeEvent[]): LifeEvent[] {
+  const totalWeeks = calculateTotalWeeks(endAge);
+  return events.filter(event => {
+    const { startWeek, endWeek } = mapDateRangeToWeeks(birthDate, event.startDate, event.endDate);
+    return startWeek < 1 || endWeek > totalWeeks;
+  });
+}
+
 export interface LifeStats {
   lived: number;
   remaining: number;

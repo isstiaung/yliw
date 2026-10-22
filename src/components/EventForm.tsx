@@ -20,7 +20,7 @@ interface EventFormData {
 }
 
 export default function EventForm() {
-  const { state, addEvent, updateEvent, deleteEvent } = useLifeData();
+  const { state, addEvent, updateEvent, deleteEvent, setPhase } = useLifeData();
   const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<LifeEvent | null>(null);
@@ -206,7 +206,13 @@ export default function EventForm() {
               {state.userData.name}&apos;s milestones
             </h1>
             <p className="text-[var(--muted)]">
-              Mark the chapters and moments that shape your weeks.
+              Mark the chapters and moments that shape your weeks.{' '}
+              <button
+                onClick={() => setPhase('setup')}
+                className="text-[var(--accent)] hover:underline whitespace-nowrap"
+              >
+                Edit your details
+              </button>
             </p>
           </div>
 
