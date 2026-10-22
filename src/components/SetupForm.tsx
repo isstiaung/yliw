@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { differenceInWeeks } from 'date-fns';
 import { useLifeData } from '@/contexts/LifeDataContext';
 import { UserData } from '@/types';
-import { eventsOffCalendar, formatDateForInput, parseLocalDate } from '@/utils/dateCalculations';
+import { calculateWeekNumber, eventsOffCalendar, formatDateForInput, parseLocalDate } from '@/utils/dateCalculations';
 import WeekStrip from './WeekStrip';
 import Logo from './Logo';
 
@@ -111,10 +110,16 @@ export default function SetupForm() {
   const previewEndAge = parseInt(formData.endAge, 10);
   const totalWeeks = (Number.isNaN(previewEndAge) ? 90 : previewEndAge) * 52;
   let weeksLived: number | null = null;
+  let weeksToGo = 0;
   if (formData.birthDate) {
     const birthDate = parseLocalDate(formData.birthDate);
     if (!Number.isNaN(birthDate.getTime()) && birthDate <= new Date()) {
-      weeksLived = Math.min(Math.max(differenceInWeeks(new Date(), birthDate), 0), totalWeeks);
+      // The grid's own week maths, not a flat count of 7-day weeks from birth,
+      // which drifts about a day a year and disagreed with the calendar by a
+      // week or more for anyone over 30. This week counts as neither.
+      const currentWeek = calculateWeekNumber(birthDate, new Date());
+      weeksLived = Math.min(Math.max(currentWeek - 1, 0), totalWeeks);
+      weeksToGo = Math.min(Math.max(totalWeeks - currentWeek, 0), totalWeeks);
     }
   }
   const lifeFraction = weeksLived === null ? 0 : weeksLived / totalWeeks;
@@ -140,7 +145,7 @@ export default function SetupForm() {
             <p className="mt-2.5 text-xs font-mono text-[var(--muted)]">
               {weeksLived === null
                 ? 'Your whole life in one row — enter your birth date to see where you are.'
-                : `You are here: ${weeksLived.toLocaleString()} weeks lived, ${(totalWeeks - weeksLived).toLocaleString()} to go.`}
+                : `You are here: ${weeksLived.toLocaleString()} weeks lived, ${weeksToGo.toLocaleString()} to go.`}
             </p>
           </div>
         </div>

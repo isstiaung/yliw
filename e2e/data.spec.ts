@@ -1,4 +1,4 @@
-import { test, expect, seed, stored, ALEX, Page } from './fixtures';
+import { test, expect, seed, stored, ALEX, TODAY, Page } from './fixtures';
 
 /** Seed once: seed() re-seeds on every load, which would hide whether data survives a reload. */
 async function seedOnce(page: Page, data: unknown = ALEX) {
@@ -25,6 +25,14 @@ test.describe('editing your details', () => {
     await seed(page);
     await page.goto('/');
     await page.getByRole('button', { name: 'Edit your details' }).click();
+  });
+
+  test('previews the same weeks lived as the calendar', async ({ page }) => {
+    // The calendar fixture pins this date and shows 1,900 lived, 2,779 remaining.
+    await page.clock.setFixedTime(TODAY);
+    await page.reload();
+    await page.getByRole('button', { name: 'Edit your details' }).click();
+    await expect(page.getByText('You are here: 1,900 weeks lived, 2,779 to go.')).toBeVisible();
   });
 
   test('opens with the current details filled in', async ({ page }) => {
