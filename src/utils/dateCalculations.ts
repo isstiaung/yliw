@@ -93,6 +93,17 @@ export function getWeekEndDate(birthDate: Date, weekNumber: number): Date {
   return addDays(getWeekDate(birthDate, weekNumber + 1), -1);
 }
 
+const weekRangeFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+/**
+ * The days a cell covers, in the viewer's locale: "12–18 May 2003",
+ * "May 12 – 18, 2003", and so on. Formatted on demand for the one week being
+ * looked at — across all 4,680 it costs tens of milliseconds.
+ */
+export function formatWeekRange(birthDate: Date, weekNumber: number): string {
+  return weekRangeFormat.formatRange(getWeekDate(birthDate, weekNumber), getWeekEndDate(birthDate, weekNumber));
+}
+
 export function mapDateToWeek(birthDate: Date, eventDate: Date): number {
   return calculateWeekNumber(birthDate, eventDate);
 }

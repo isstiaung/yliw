@@ -14,6 +14,7 @@ import {
   isLabelledAge,
   eventsOffCalendar,
   summarizeWeeks,
+  formatWeekRange,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
 
@@ -304,5 +305,19 @@ describe('summarizeWeeks', () => {
   it('reports everything lived once the calendar has run out', () => {
     const stats = summarizeWeeks(generateWeekData(birth, 20, [], parseLocalDate('2026-09-30')));
     expect(stats).toEqual({ lived: 1040, remaining: 0, percentLived: 100 });
+  });
+});
+
+describe('formatWeekRange', () => {
+  const birth = parseLocalDate('1990-03-12');
+  const expected = (start: Date, end: Date) =>
+    new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).formatRange(start, end);
+
+  it('spans the first to the last day of the cell', () => {
+    expect(formatWeekRange(birth, 1)).toBe(expected(parseLocalDate('1990-03-12'), parseLocalDate('1990-03-18')));
+  });
+
+  it('includes the extra day or two of the last cell in a row', () => {
+    expect(formatWeekRange(birth, 52)).toBe(expected(parseLocalDate('1991-03-04'), parseLocalDate('1991-03-11')));
   });
 });

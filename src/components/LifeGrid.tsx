@@ -256,7 +256,7 @@ export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
                 onPointerOver={handlePointerOver}
                 onPointerLeave={clearTooltip}
               >
-                <WeekTooltip target={tooltip} />
+                <WeekTooltip target={tooltip} birthDate={userData.birthDate} />
 
                 {/* Focus ring as an overlay rather than a class on the active
                     cell: arrow keys then change no props on any of the 4,680

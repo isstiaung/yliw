@@ -44,6 +44,15 @@ test.describe('the week grid', () => {
     await expect(tooltip).toHaveCount(0);
   });
 
+  test('names the days the week covers', async ({ calendar: page }) => {
+    // Week 1,873 is the first of age 36: 12–18 March 2026.
+    await page.locator('#week-1873').hover();
+    const expected = await page.evaluate(() =>
+      new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+        .formatRange(new Date(2026, 2, 12), new Date(2026, 2, 18)));
+    await expect(page.getByRole('tooltip')).toContainText(expected);
+  });
+
   test('labels each row with the age the tooltip gives its weeks', async ({ calendar: page }) => {
     const label = page.locator('.life-grid .font-mono').filter({ hasText: /^35$/ });
     const cell = page.locator(`#week-${35 * 52 + 1}`);
