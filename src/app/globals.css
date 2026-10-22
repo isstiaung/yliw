@@ -120,7 +120,8 @@
 }
 
 [data-theme='sketch'] .font-display {
-  font-family: var(--font-caveat), 'Bradley Hand', 'Segoe Print', cursive;
+  /* No generic `cursive` at the end: on Windows that is Comic Sans MS. */
+  font-family: var(--font-caveat), 'Bradley Hand', 'Segoe Print', Georgia, serif;
   letter-spacing: 0;
 }
 
