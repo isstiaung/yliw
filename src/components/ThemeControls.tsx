@@ -8,6 +8,7 @@ import {
   getThemeSettingsSnapshot,
   getThemeSettingsServerSnapshot,
   commitThemeSettings,
+  withDerivedBorders,
   ThemeId,
   ThemeSettings,
 } from '@/utils/themes';
@@ -60,7 +61,7 @@ export default function ThemeControls({ className = '' }: { className?: string }
   };
 
   const setToken = (varName: string, value: string) => {
-    update({ ...settings, custom: { ...settings.custom, [varName]: value } });
+    update({ ...settings, custom: withDerivedBorders({ ...settings.custom, [varName]: value }) });
   };
 
   const hasCustom = Object.keys(settings.custom).length > 0;
