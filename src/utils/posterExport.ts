@@ -1,4 +1,5 @@
 import { UserData, WeekData } from '@/types';
+import { isLabelledAge } from './dateCalculations';
 
 /**
  * Poster export.
@@ -136,12 +137,11 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     );
   });
 
-  // Age labels every five years, aligned to their row.
-  for (let row = 0; row < rows; row++) {
-    const year = row + 1;
-    if (year % 5 !== 0) continue;
+  // Age labels every five years, aligned to their row. Row n is age n.
+  for (let age = 0; age < rows; age++) {
+    if (!isLabelledAge(age)) continue;
     parts.push(
-      `<text x="${gridLeft - 12}" y="${gridTop + row * step + box - 2}" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="${escapeXml(palette.muted)}">${year}</text>`
+      `<text x="${gridLeft - 12}" y="${gridTop + age * step + box - 2}" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="${escapeXml(palette.muted)}">${age}</text>`
     );
   }
 

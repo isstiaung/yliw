@@ -127,3 +127,16 @@ describe('attribute escaping', () => {
     expect(svg).toContain('&lt;script&gt;');
   });
 });
+
+describe('age labels', () => {
+  it('label row n with age n, as the tooltip does', () => {
+    const svg = svgFor(makeUser());
+    const labels = [...svg.matchAll(/font-size="11"[^>]*>(\d+)<\/text>/g)].map(m => Number(m[1]));
+    expect(labels[0]).toBe(5);
+    expect(labels.at(-1)).toBe(85);
+    // Label 5 sits on the sixth row: same y as the top of row 5 plus the box.
+    const label5 = svg.match(/y="([\d.]+)"[^>]*font-size="11"[^>]*>5<\/text>/)![1];
+    const firstRect = svg.match(/<rect x="[\d.]+" y="([\d.]+)" width="14"/)![1];
+    expect(Number(label5)).toBe(Number(firstRect) + 5 * 18 + 14 - 2);
+  });
+});

@@ -113,6 +113,13 @@ export function getAgeFromWeek(weekNumber: number): number {
   return Math.floor((weekNumber - 1) / WEEKS_PER_YEAR);
 }
 
+/**
+ * Whether a row carries an age label. Row n is age n, the same age the tooltip
+ * and screen reader give for its weeks, so the row labelled 35 is the year
+ * from the 35th birthday to the 36th. The grid and the poster both use this.
+ */
+export const isLabelledAge = (age: number): boolean => age > 0 && age % 5 === 0;
+
 export function generateWeekData(
   birthDate: Date,
   endAge: number,

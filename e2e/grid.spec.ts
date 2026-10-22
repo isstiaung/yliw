@@ -43,6 +43,15 @@ test.describe('the week grid', () => {
     await page.mouse.move(2, 2);
     await expect(tooltip).toHaveCount(0);
   });
+
+  test('labels each row with the age the tooltip gives its weeks', async ({ calendar: page }) => {
+    const label = page.locator('.life-grid .font-mono').filter({ hasText: /^35$/ });
+    const cell = page.locator(`#week-${35 * 52 + 1}`);
+    const [labelBox, cellBox] = [await label.boundingBox(), await cell.boundingBox()];
+    expect(Math.abs(labelBox!.y + labelBox!.height / 2 - (cellBox!.y + cellBox!.height / 2))).toBeLessThan(2);
+    await cell.hover();
+    await expect(page.getByRole('tooltip')).toContainText('Age 35');
+  });
 });
 
 test.describe('keyboard navigation', () => {

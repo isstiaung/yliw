@@ -11,6 +11,7 @@ import {
   mapDateRangeToWeeks,
   getAgeFromWeek,
   parseStrictDate,
+  isLabelledAge,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
 
@@ -249,5 +250,21 @@ describe('parseStrictDate', () => {
 
   it.each(['2021-02-29', '2020-13-01', '2020-04-31', '2020-4-1', '2020-04-01T00:00', ''])('rejects %o', value => {
     expect(parseStrictDate(value)).toBeNull();
+  });
+});
+
+describe('isLabelledAge', () => {
+  it('labels every fifth age, starting at 5', () => {
+    const labelled = Array.from({ length: 90 }, (_, age) => age).filter(isLabelledAge);
+    expect(labelled[0]).toBe(5);
+    expect(labelled.at(-1)).toBe(85);
+    expect(labelled).toHaveLength(17);
+  });
+
+  it('labels the row whose weeks are that age', () => {
+    // Row 5 holds weeks 261–312, and getAgeFromWeek — what the tooltip shows — calls them age 5.
+    expect(isLabelledAge(5)).toBe(true);
+    expect(getAgeFromWeek(5 * 52 + 1)).toBe(5);
+    expect(getAgeFromWeek(6 * 52)).toBe(5);
   });
 });
