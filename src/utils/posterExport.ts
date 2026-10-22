@@ -1,5 +1,6 @@
 import { UserData, WeekData } from '@/types';
 import { isLabelledAge, summarizeWeeks } from './dateCalculations';
+import { getIconShape, SvgNode } from './icons';
 
 /**
  * Poster export.
@@ -138,6 +139,22 @@ export function wrapText(text: string, fontSize: number, maxWidth: number, maxLi
   return kept;
 }
 
+/* ---- icons -------------------------------------------------------------- */
+
+const SAFE_NAME = /^[a-zA-Z][\w:-]*$/;
+
+function serializeNode(node: SvgNode): string {
+  if (!SAFE_NAME.test(node.tag)) return '';
+  const attrs = Object.entries(node.attrs)
+    .filter(([name]) => SAFE_NAME.test(name))
+    .map(([name, value]) => ` ${name}="${escapeXml(value)}"`)
+    .join('');
+  return `<${node.tag}${attrs}>${node.children.map(serializeNode).join('')}</${node.tag}>`;
+}
+
+/** Same proportion as the icons in the on-screen squares (WeekBox). */
+const ICON_SCALE = 0.72;
+
 const TITLE_SIZE = 46;
 const MIN_TITLE_SIZE = 28;
 const LEGEND_SIZE = 13;
@@ -178,15 +195,32 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     naturalTitle > textWidth ? Math.max(MIN_TITLE_SIZE, Math.floor((TITLE_SIZE * textWidth) / naturalTitle)) : TITLE_SIZE;
   const titleName = truncateText(userData.name, titleSize, textWidth - estimateTextWidth(titleSuffix, titleSize));
 
+  // One <symbol> per icon in use, drawn into every square with <use>: a
+  // four-year job is 200-odd squares, and repeating the path data in each
+  // would multiply the file size for nothing.
+  const iconIds = new Map<string, string>();
+  const symbols: string[] = [];
+  for (const { icon } of userData.events) {
+    if (iconIds.has(icon)) continue;
+    const shape = getIconShape(icon);
+    if (!shape) continue;
+    const id = `icon-${iconIds.size}`;
+    iconIds.set(icon, id);
+    symbols.push(
+      `<symbol id="${id}" viewBox="${escapeXml(shape.viewBox)}">${shape.nodes.map(serializeNode).join('')}</symbol>`
+    );
+  }
+
   const parts: string[] = [];
 
   parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(userData.name)}'s life in weeks">`
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(userData.name)}'s life in weeks">`
   );
   parts.push(
     `<title>${escapeXml(userData.name)}&apos;s Life in Weeks</title>`,
     `<rect width="${width}" height="${height}" fill="${escapeXml(palette.paper)}"/>`
   );
+  if (symbols.length) parts.push(`<defs>${symbols.join('')}</defs>`);
 
   // Header
   const centre = width / 2;
@@ -226,17 +260,24 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
 
   // The grid. Squares are emitted individually; a 90-year poster is 4,680
   // rects, which every renderer handles fine and keeps the file honest.
+  const iconSize = box * ICON_SCALE;
+  const iconInset = (box - iconSize) / 2;
   for (const week of weekData) {
     const index = week.weekNumber - 1;
-    const col = index % WEEKS_PER_ROW;
-    const row = Math.floor(index / WEEKS_PER_ROW);
+    const x = gridLeft + (index % WEEKS_PER_ROW) * step;
+    const y = gridTop + Math.floor(index / WEEKS_PER_ROW) * step;
     const [fill, stroke] = weekFill(week, palette);
     parts.push(
-      `<rect x="${gridLeft + col * step}" y="${gridTop + row * step}" width="${box}" height="${box}" rx="2" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="1"/>`
+      `<rect x="${x}" y="${y}" width="${box}" height="${box}" rx="2" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="1"/>`
     );
-    if (week.isCurrent && !week.event) {
+    const iconId = week.event && iconIds.get(week.event.icon);
+    if (iconId) {
       parts.push(
-        `<circle cx="${gridLeft + col * step + box / 2}" cy="${gridTop + row * step + box / 2}" r="${box * 0.16}" fill="#ffffff"/>`
+        `<use xlink:href="#${iconId}" x="${x + iconInset}" y="${y + iconInset}" width="${iconSize}" height="${iconSize}" fill="#ffffff" fill-opacity="0.85"/>`
+      );
+    } else if (week.isCurrent && !week.event) {
+      parts.push(
+        `<circle cx="${x + box / 2}" cy="${y + box / 2}" r="${box * 0.16}" fill="#ffffff"/>`
       );
     }
   }

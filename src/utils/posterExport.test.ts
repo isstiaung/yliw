@@ -232,3 +232,27 @@ describe('text helpers', () => {
     expect(wrapText('日', 10, 5, 3)).toEqual(['日']);
   });
 });
+
+describe('milestone icons', () => {
+  it('defines each icon once and draws it in every square the milestone owns', () => {
+    const user = makeUser({ events: [milestone()] });
+    const weekData = generateWeekData(user.birthDate, user.endAge, user.events);
+    const owned = weekData.filter(w => w.event).length;
+    const svg = buildPosterSvg({ userData: user, weekData });
+    expect(svg.match(/<symbol /g)).toHaveLength(1);
+    expect(svg.match(/<use xlink:href="#icon-0"/g)).toHaveLength(owned);
+    expect(svg).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"');
+  });
+
+  it('shares one symbol between milestones with the same icon', () => {
+    const user = makeUser({
+      events: [milestone(), milestone({ id: 'e2', title: 'Masters', startDate: parseLocalDate('2013-09-15'), endDate: parseLocalDate('2014-06-10') })],
+    });
+    expect(svgFor(user).match(/<symbol /g)).toHaveLength(1);
+  });
+
+  it('draws nothing for an unknown icon, and no defs without milestones', () => {
+    expect(svgFor(makeUser({ events: [milestone({ icon: 'Nope' })] }))).not.toContain('<use');
+    expect(svgFor(makeUser())).not.toContain('<defs>');
+  });
+});
