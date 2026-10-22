@@ -1,5 +1,5 @@
 import { UserData, WeekData } from '@/types';
-import { isLabelledAge } from './dateCalculations';
+import { isLabelledAge, summarizeWeeks } from './dateCalculations';
 
 /**
  * Poster export.
@@ -97,8 +97,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
   const width = gridLeft + gridWidth + padding;
   const height = gridTop + gridHeight + footerHeight;
 
-  const weeksLived = weekData.filter(w => w.isPast).length;
-  const pctLived = Math.round((weeksLived / weekData.length) * 100);
+  const { lived: weeksLived, remaining: weeksRemaining, percentLived: pctLived } = summarizeWeeks(weekData);
 
   const parts: string[] = [];
 
@@ -174,7 +173,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
 
   const stats: Array<[string, string]> = [
     [weeksLived.toLocaleString(), 'WEEKS LIVED'],
-    [(weekData.length - weeksLived).toLocaleString(), 'WEEKS REMAINING'],
+    [weeksRemaining.toLocaleString(), 'WEEKS REMAINING'],
     [`${pctLived}%`, 'LIFE LIVED'],
     [userData.events.length.toLocaleString(), 'MILESTONES'],
   ];

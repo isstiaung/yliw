@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
-import { generateWeekData, isLabelledAge } from '@/utils/dateCalculations';
+import { generateWeekData, isLabelledAge, summarizeWeeks } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import WeekTooltip, { TooltipTarget } from './WeekTooltip';
 import { nextWeekForKey, WEEKS_PER_ROW } from '@/utils/gridNavigation';
@@ -158,9 +158,7 @@ export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
   // One label slot per row; row n is age n
   const ages = Array.from({ length: userData.endAge }, (_, age) => age);
 
-  const weeksLived = weekData.filter(w => w.isPast).length;
-  const weeksRemaining = weekData.filter(w => !w.isPast && !w.isCurrent).length;
-  const pctLived = Math.round((weeksLived / weekData.length) * 100);
+  const { lived: weeksLived, remaining: weeksRemaining, percentLived: pctLived } = summarizeWeeks(weekData);
 
   const stats = [
     { label: 'Weeks lived', value: weeksLived.toLocaleString() },

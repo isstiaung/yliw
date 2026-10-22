@@ -12,6 +12,7 @@ import {
   getAgeFromWeek,
   parseStrictDate,
   isLabelledAge,
+  summarizeWeeks,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
 
@@ -266,5 +267,22 @@ describe('isLabelledAge', () => {
     expect(isLabelledAge(5)).toBe(true);
     expect(getAgeFromWeek(5 * 52 + 1)).toBe(5);
     expect(getAgeFromWeek(6 * 52)).toBe(5);
+  });
+});
+
+describe('summarizeWeeks', () => {
+  const birth = parseLocalDate('1990-03-12');
+
+  it('counts the current week as neither lived nor remaining', () => {
+    const weeks = generateWeekData(birth, 90, [], parseLocalDate('2026-09-30'));
+    const stats = summarizeWeeks(weeks);
+    expect(stats.lived).toBe(1900);
+    expect(stats.lived + stats.remaining + 1).toBe(4680);
+    expect(stats.percentLived).toBe(41);
+  });
+
+  it('reports everything lived once the calendar has run out', () => {
+    const stats = summarizeWeeks(generateWeekData(birth, 20, [], parseLocalDate('2026-09-30')));
+    expect(stats).toEqual({ lived: 1040, remaining: 0, percentLived: 100 });
   });
 });

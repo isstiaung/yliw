@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildPosterSvg, fileStem } from './posterExport';
-import { generateWeekData, parseLocalDate } from './dateCalculations';
+import { generateWeekData, parseLocalDate, summarizeWeeks } from './dateCalculations';
 import { UserData } from '@/types';
 
 const birthDate = parseLocalDate('1990-03-12');
@@ -125,6 +125,17 @@ describe('attribute escaping', () => {
     });
     expect(svg).not.toContain('<script>');
     expect(svg).toContain('&lt;script&gt;');
+  });
+});
+
+describe('stats', () => {
+  it('reports the same weeks remaining as the app, not counting the current week', () => {
+    const user = makeUser();
+    const weekData = generateWeekData(user.birthDate, user.endAge, user.events, parseLocalDate('2026-09-30'));
+    const { remaining } = summarizeWeeks(weekData);
+    const svg = buildPosterSvg({ userData: user, weekData });
+    expect(svg).toContain(`>${remaining.toLocaleString()}</text>`);
+    expect(svg).not.toContain(`>${(remaining + 1).toLocaleString()}</text>`);
   });
 });
 

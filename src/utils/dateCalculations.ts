@@ -120,6 +120,27 @@ export function getAgeFromWeek(weekNumber: number): number {
  */
 export const isLabelledAge = (age: number): boolean => age > 0 && age % 5 === 0;
 
+export interface LifeStats {
+  lived: number;
+  remaining: number;
+  percentLived: number;
+}
+
+/**
+ * The stats under the grid. The app and the poster both show these, and
+ * defining them once keeps the two from disagreeing: the current week counts
+ * as neither lived nor remaining.
+ */
+export function summarizeWeeks(weeks: WeekData[]): LifeStats {
+  const lived = weeks.filter(w => w.isPast).length;
+  const remaining = weeks.filter(w => !w.isPast && !w.isCurrent).length;
+  return {
+    lived,
+    remaining,
+    percentLived: weeks.length ? Math.round((lived / weeks.length) * 100) : 0,
+  };
+}
+
 export function generateWeekData(
   birthDate: Date,
   endAge: number,
