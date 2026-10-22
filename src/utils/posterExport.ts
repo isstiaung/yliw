@@ -79,6 +79,72 @@ export interface PosterOptions {
   palette?: PosterPalette;
 }
 
+/* ---- text layout --------------------------------------------------------
+   SVG text never wraps or shrinks to fit, and there is no DOM here to
+   measure it with, so widths are estimated: about 0.55em a character for
+   Latin text and a full em for CJK and emoji. Deliberately generous — a
+   little slack on the line is fine, text running off the poster is not. */
+
+const WIDE_CHAR =
+  /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6]|\p{Extended_Pictographic}/u;
+
+export function estimateTextWidth(text: string, fontSize: number): number {
+  let ems = 0;
+  for (const char of text) ems += WIDE_CHAR.test(char) ? 1 : 0.55;
+  return ems * fontSize;
+}
+
+/** Shorten text to fit a width, ending in an ellipsis when anything is cut. */
+export function truncateText(text: string, fontSize: number, maxWidth: number): string {
+  if (estimateTextWidth(text, fontSize) <= maxWidth) return text;
+  const chars = Array.from(text);
+  while (chars.length > 0 && estimateTextWidth(`${chars.join('')}…`, fontSize) > maxWidth) chars.pop();
+  return `${chars.join('').trimEnd()}…`;
+}
+
+/**
+ * Greedy word wrap into at most `maxLines`, the last one cut with an ellipsis
+ * if the text runs longer. Line breaks in the text are kept, and a word too
+ * long for a line — or unspaced text such as Japanese — breaks anywhere.
+ */
+export function wrapText(text: string, fontSize: number, maxWidth: number, maxLines: number): string[] {
+  const fits = (value: string) => estimateTextWidth(value, fontSize) <= maxWidth;
+  const lines: string[] = [];
+
+  for (const paragraph of text.split(/\r?\n/)) {
+    let line = '';
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (fits(candidate)) {
+        line = candidate;
+        continue;
+      }
+      if (line) lines.push(line);
+      let rest = Array.from(word);
+      while (!fits(rest.join(''))) {
+        let take = Math.max(1, rest.length - 1);
+        while (take > 1 && !fits(rest.slice(0, take).join(''))) take--;
+        lines.push(rest.slice(0, take).join(''));
+        rest = rest.slice(take);
+      }
+      line = rest.join('');
+    }
+    if (line) lines.push(line);
+  }
+
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  kept[maxLines - 1] = truncateText(`${kept[maxLines - 1]} ${lines[maxLines]}`, fontSize, maxWidth);
+  return kept;
+}
+
+const TITLE_SIZE = 46;
+const MIN_TITLE_SIZE = 28;
+const LEGEND_SIZE = 13;
+const QUOTE_SIZE = 19;
+const QUOTE_LINE_HEIGHT = 28;
+const MAX_QUOTE_LINES = 5;
+
 export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: PosterOptions): string {
   const { box, gap, padding, labelGutter } = GEOMETRY;
   const step = box + gap;
@@ -93,11 +159,24 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
   const gridTop = padding + headerHeight + legendHeight;
   const gridHeight = rows * step - gap;
 
-  const footerHeight = userData.quote ? 150 : 110;
   const width = gridLeft + gridWidth + padding;
+  const textWidth = width - padding * 2;
+
+  // Curly quotes go in before wrapping so they are measured with the words.
+  const quoteLines = userData.quote
+    ? wrapText(`\u201c${userData.quote}\u201d`, QUOTE_SIZE, textWidth, MAX_QUOTE_LINES)
+    : [];
+  const footerHeight = quoteLines.length ? 150 + (quoteLines.length - 1) * QUOTE_LINE_HEIGHT : 110;
   const height = gridTop + gridHeight + footerHeight;
 
   const { lived: weeksLived, remaining: weeksRemaining, percentLived: pctLived } = summarizeWeeks(weekData);
+
+  // A long name shrinks the title before it is shortened.
+  const titleSuffix = "'s Life in Weeks";
+  const naturalTitle = estimateTextWidth(userData.name + titleSuffix, TITLE_SIZE);
+  const titleSize =
+    naturalTitle > textWidth ? Math.max(MIN_TITLE_SIZE, Math.floor((TITLE_SIZE * textWidth) / naturalTitle)) : TITLE_SIZE;
+  const titleName = truncateText(userData.name, titleSize, textWidth - estimateTextWidth(titleSuffix, titleSize));
 
   const parts: string[] = [];
 
@@ -113,7 +192,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
   const centre = width / 2;
   parts.push(
     `<text x="${centre}" y="${padding + 22}" text-anchor="middle" font-family="ui-monospace, monospace" font-size="15" letter-spacing="4" fill="${escapeXml(palette.accent)}">MEMENTO MORI</text>`,
-    `<text x="${centre}" y="${padding + 74}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" fill="${escapeXml(palette.ink)}">${escapeXml(userData.name)}&apos;s Life in Weeks</text>`,
+    `<text x="${centre}" y="${padding + 74}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${titleSize}" fill="${escapeXml(palette.ink)}">${escapeXml(titleName)}&apos;s Life in Weeks</text>`,
     `<text x="${centre}" y="${padding + 106}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" fill="${escapeXml(palette.muted)}">Born ${escapeXml(userData.birthDate.toLocaleDateString())} · each square is one week</text>`
   );
 
@@ -125,6 +204,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     ...userData.events.map(e => [e.color, e.title] as [string, string]),
   ];
   const columnWidth = (gridWidth + labelGutter) / 4;
+  const labelWidth = columnWidth - 19 - 12;
   legend.forEach(([color, label], index) => {
     const col = index % 4;
     const row = Math.floor(index / 4);
@@ -132,7 +212,7 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
     const y = padding + headerHeight + row * 26;
     parts.push(
       `<rect x="${x}" y="${y}" width="12" height="12" rx="2" fill="${escapeXml(color)}" stroke="${escapeXml(palette.line)}"/>`,
-      `<text x="${x + 19}" y="${y + 11}" font-family="system-ui, sans-serif" font-size="13" fill="${escapeXml(palette.ink)}">${escapeXml(label)}</text>`
+      `<text x="${x + 19}" y="${y + 11}" font-family="system-ui, sans-serif" font-size="${LEGEND_SIZE}" fill="${escapeXml(palette.ink)}">${escapeXml(truncateText(label, LEGEND_SIZE, labelWidth))}</text>`
     );
   });
 
@@ -163,12 +243,17 @@ export function buildPosterSvg({ userData, weekData, palette = FALLBACK }: Poste
 
   // Footer: optional quote, then the same four stats the app shows.
   let footerY = gridTop + gridHeight + 46;
-  if (userData.quote) {
+  if (quoteLines.length) {
     parts.push(
-      `<line x1="${padding}" y1="${footerY - 26}" x2="${width - padding}" y2="${footerY - 26}" stroke="${escapeXml(palette.line)}"/>`,
-      `<text x="${centre}" y="${footerY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="19" fill="${escapeXml(palette.ink)}">&#8220;${escapeXml(userData.quote)}&#8221;</text>`
+      `<line x1="${padding}" y1="${footerY - 26}" x2="${width - padding}" y2="${footerY - 26}" stroke="${escapeXml(palette.line)}"/>`
     );
-    footerY += 46;
+    quoteLines.forEach((line, i) => {
+      const text = escapeXml(line).replace(/\u201c/g, '&#8220;').replace(/\u201d/g, '&#8221;');
+      parts.push(
+        `<text x="${centre}" y="${footerY + i * QUOTE_LINE_HEIGHT}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="${QUOTE_SIZE}" fill="${escapeXml(palette.ink)}">${text}</text>`
+      );
+    });
+    footerY += 46 + (quoteLines.length - 1) * QUOTE_LINE_HEIGHT;
   }
 
   const stats: Array<[string, string]> = [
