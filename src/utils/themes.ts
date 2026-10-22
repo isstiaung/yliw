@@ -31,6 +31,47 @@ export const customizableTokens: CustomizableToken[] = [
   { var: '--week-current', label: 'This week' },
 ];
 
+/**
+ * Each week fill has a border token, and the presets tune the two together.
+ * Customising only the fill left the preset's border round it — a cream outline
+ * on red squares — so a custom fill brings a matching border with it.
+ *
+ * `mix` is how far the border sits from its fill (0: the same colour). It
+ * darkens a light fill and lightens a dark one, as the presets do for future
+ * weeks; the current week's border is always the darker edge of its fill.
+ * That fill defaults to the accent, so a custom accent moves it too.
+ */
+const DERIVED_BORDERS: Array<{ fill: string; border: string; mix: number; darken?: boolean; inherits?: string }> = [
+  { fill: '--week-future', border: '--week-future-border', mix: 0.1 },
+  { fill: '--week-past', border: '--week-past-border', mix: 0 },
+  { fill: '--week-current', border: '--week-current-border', mix: 0.22, darken: true, inherits: '--accent' },
+];
+
+/** Every variable a custom setting may have put on <html>. */
+const overridableVars = [...customizableTokens.map(t => t.var), ...DERIVED_BORDERS.map(d => d.border)];
+
+function shade(hex: string, mix: number, darken: boolean): string | null {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!match) return null;
+  const value = parseInt(match[1], 16);
+  const rgb = [value >> 16, (value >> 8) & 255, value & 255];
+  const luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+  const target = darken || luminance > 0.5 ? 0 : 255;
+  return `#${rgb.map(c => Math.round(c + (target - c) * mix).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Recompute the border tokens for whichever fills are customised. */
+export function withDerivedBorders(custom: Record<string, string>): Record<string, string> {
+  const next = { ...custom };
+  for (const { fill, border, mix, darken = false, inherits } of DERIVED_BORDERS) {
+    const source = next[fill] ?? (inherits ? next[inherits] : undefined);
+    const derived = source ? shade(source, mix, darken) : null;
+    if (derived) next[border] = derived;
+    else delete next[border];
+  }
+  return next;
+}
+
 export interface ThemeSettings {
   theme: ThemeId;
   /** Per-variable colour overrides layered on top of the preset. */
@@ -73,8 +114,8 @@ export function applyThemeSettings(settings: ThemeSettings): void {
   } else {
     root.setAttribute('data-theme', settings.theme);
   }
-  for (const token of customizableTokens) {
-    root.style.removeProperty(token.var);
+  for (const name of overridableVars) {
+    root.style.removeProperty(name);
   }
   for (const [key, value] of Object.entries(settings.custom)) {
     root.style.setProperty(key, value);

@@ -1,4 +1,4 @@
-import { parseLocalDate } from './dateCalculations';
+import { parseStrictDate } from './dateCalculations';
 import { eventColors } from './eventColors';
 import { iconOptions } from './icons';
 
@@ -77,17 +77,6 @@ function parseCsv(text: string): string[][] {
   }
 
   return rows.filter(r => r.some(cell => cell.trim() !== ''));
-}
-
-function parseStrictDate(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const date = parseLocalDate(value);
-  const [year, month, day] = value.split('-').map(Number);
-  // Reject rolled-over dates like 2020-02-31
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return null;
-  }
-  return date;
 }
 
 function resolveIcon(value: string): string {

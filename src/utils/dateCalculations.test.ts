@@ -10,6 +10,11 @@ import {
   generateWeekData,
   mapDateRangeToWeeks,
   getAgeFromWeek,
+  parseStrictDate,
+  isLabelledAge,
+  eventsOffCalendar,
+  summarizeWeeks,
+  formatWeekRange,
 } from './dateCalculations';
 import { LifeEvent } from '@/types';
 
@@ -238,5 +243,81 @@ describe('generateWeekData', () => {
     expect(weeks[52].year).toBe(2);
     expect(weeks[51].weekInYear).toBe(52);
     expect(weeks[52].weekInYear).toBe(1);
+  });
+});
+
+describe('parseStrictDate', () => {
+  it('parses a real day as local midnight', () => {
+    expect(parseStrictDate('2020-02-29')).toEqual(new Date(2020, 1, 29));
+  });
+
+  it.each(['2021-02-29', '2020-13-01', '2020-04-31', '2020-4-1', '2020-04-01T00:00', ''])('rejects %o', value => {
+    expect(parseStrictDate(value)).toBeNull();
+  });
+});
+
+describe('isLabelledAge', () => {
+  it('labels every fifth age, starting at 5', () => {
+    const labelled = Array.from({ length: 90 }, (_, age) => age).filter(isLabelledAge);
+    expect(labelled[0]).toBe(5);
+    expect(labelled.at(-1)).toBe(85);
+    expect(labelled).toHaveLength(17);
+  });
+
+  it('labels the row whose weeks are that age', () => {
+    // Row 5 holds weeks 261–312, and getAgeFromWeek — what the tooltip shows — calls them age 5.
+    expect(isLabelledAge(5)).toBe(true);
+    expect(getAgeFromWeek(5 * 52 + 1)).toBe(5);
+    expect(getAgeFromWeek(6 * 52)).toBe(5);
+  });
+});
+
+describe('eventsOffCalendar', () => {
+  const birth = '1990-03-12';
+
+  it('is empty when every event fits', () => {
+    expect(eventsOffCalendar(parseLocalDate(birth), 90, [event('2008-09-15', '2012-06-10', birth)])).toEqual([]);
+  });
+
+  it('finds events from before a later birth date', () => {
+    const e = event('2008-09-15', '2012-06-10', birth);
+    expect(eventsOffCalendar(parseLocalDate('2010-01-01'), 90, [e])).toEqual([e]);
+  });
+
+  it('finds events that run past a shorter calendar', () => {
+    const e = event('2008-09-15', '2012-06-10', birth);
+    expect(eventsOffCalendar(parseLocalDate(birth), 20, [e])).toEqual([e]);
+    expect(eventsOffCalendar(parseLocalDate(birth), 23, [e])).toEqual([]);
+  });
+});
+
+describe('summarizeWeeks', () => {
+  const birth = parseLocalDate('1990-03-12');
+
+  it('counts the current week as neither lived nor remaining', () => {
+    const weeks = generateWeekData(birth, 90, [], parseLocalDate('2026-09-30'));
+    const stats = summarizeWeeks(weeks);
+    expect(stats.lived).toBe(1900);
+    expect(stats.lived + stats.remaining + 1).toBe(4680);
+    expect(stats.percentLived).toBe(41);
+  });
+
+  it('reports everything lived once the calendar has run out', () => {
+    const stats = summarizeWeeks(generateWeekData(birth, 20, [], parseLocalDate('2026-09-30')));
+    expect(stats).toEqual({ lived: 1040, remaining: 0, percentLived: 100 });
+  });
+});
+
+describe('formatWeekRange', () => {
+  const birth = parseLocalDate('1990-03-12');
+  const expected = (start: Date, end: Date) =>
+    new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).formatRange(start, end);
+
+  it('spans the first to the last day of the cell', () => {
+    expect(formatWeekRange(birth, 1)).toBe(expected(parseLocalDate('1990-03-12'), parseLocalDate('1990-03-18')));
+  });
+
+  it('includes the extra day or two of the last cell in a row', () => {
+    expect(formatWeekRange(birth, 52)).toBe(expected(parseLocalDate('1991-03-04'), parseLocalDate('1991-03-11')));
   });
 });

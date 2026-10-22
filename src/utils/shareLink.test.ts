@@ -136,3 +136,45 @@ describe('hostile or broken links', () => {
     await expect(decodeShareFragment({ kind: 'plain', data })).rejects.toThrow(/different version/);
   });
 });
+
+describe('ids for shared milestones', () => {
+  const idsFor = async (u: UserData) =>
+    (await decodeShareFragment(parseFragment('#' + (await encodeShareFragment(u)))!)).events.map(e => e.id);
+
+  it('differ between two people\'s calendars, so their ICS UIDs never collide', async () => {
+    const mine = await idsFor(user());
+    const theirs = await idsFor({ ...user(), name: 'Sam Okafor', birthDate: parseLocalDate('1985-01-01') });
+    expect(mine.filter(id => theirs.includes(id))).toEqual([]);
+  });
+
+  it('stay the same when the same calendar is shared again, even with a milestone added', async () => {
+    const before = await idsFor(user());
+    const grown = user();
+    grown.events.unshift({ ...grown.events[0], id: 'new', title: 'Moved to Lisbon' });
+    const after = await idsFor(grown);
+    expect(after.slice(1)).toEqual(before);
+  });
+
+  it('stay unique when two milestones are identical', async () => {
+    const twins = user();
+    twins.events.push({ ...twins.events[0] });
+    const ids = await idsFor(twins);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('dates in links', () => {
+  it('are read as the same calendar day in any timezone', async () => {
+    const fragment = await encodeShareFragment(user());
+    const original = process.env.TZ;
+    try {
+      for (const tz of ['Pacific/Honolulu', 'Asia/Tokyo']) {
+        process.env.TZ = tz;
+        const decoded = await decodeShareFragment(parseFragment('#' + fragment)!);
+        expect(formatDateForInput(decoded.birthDate)).toBe('1990-03-12');
+      }
+    } finally {
+      process.env.TZ = original;
+    }
+  });
+});

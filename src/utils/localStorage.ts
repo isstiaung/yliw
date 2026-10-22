@@ -1,8 +1,14 @@
 import { UserData, LifeEvent } from '@/types';
-import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
+import { formatDateForInput, mapDateRangeToWeeks, parseStrictDate } from '@/utils/dateCalculations';
 
 const STORAGE_KEY = 'yliw-user-data';
 
+/**
+ * Dates are stored as calendar days, `YYYY-MM-DD`, not as instants. They used
+ * to be `toISOString()`, which records local midnight as a UTC instant: read
+ * back in a different timezone — after travelling, or importing an export on
+ * another device — that instant falls on the previous or next day.
+ */
 interface SerializedEvent {
   id: string;
   title: string;
@@ -22,18 +28,23 @@ interface SerializedUserData {
   events: SerializedEvent[];
 }
 
+export function serializeUserData(userData: UserData): SerializedUserData {
+  return {
+    name: userData.name,
+    birthDate: formatDateForInput(userData.birthDate),
+    endAge: userData.endAge,
+    quote: userData.quote,
+    events: userData.events.map(event => ({
+      ...event,
+      startDate: formatDateForInput(event.startDate),
+      endDate: formatDateForInput(event.endDate),
+    })),
+  };
+}
+
 export function saveUserData(userData: UserData): void {
   try {
-    const serializedData = JSON.stringify({
-      ...userData,
-      birthDate: userData.birthDate.toISOString(),
-      events: userData.events.map(event => ({
-        ...event,
-        startDate: event.startDate.toISOString(),
-        endDate: event.endDate.toISOString()
-      }))
-    });
-    localStorage.setItem(STORAGE_KEY, serializedData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeUserData(userData)));
   } catch (error) {
     console.error('Failed to save user data:', error);
   }
@@ -63,7 +74,7 @@ export function exportUserData(): string {
   const userData = loadUserData();
   if (!userData) return '';
 
-  return JSON.stringify(userData, null, 2);
+  return JSON.stringify(serializeUserData(userData), null, 2);
 }
 
 export function importUserData(jsonString: string): UserData | null {
@@ -85,8 +96,33 @@ export function importUserData(jsonString: string): UserData | null {
  */
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-function isValidDate(date: Date): boolean {
-  return !Number.isNaN(date.getTime());
+const HALF_DAY_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * A stored date as a local calendar day, or null if it is not a date.
+ *
+ * `YYYY-MM-DD` is the current format. Anything else is read as an instant,
+ * which is what older versions wrote: local midnight, as UTC. In the timezone
+ * that wrote it, it is still local midnight, so its local date is the day.
+ * Elsewhere, the writer's midnight was somewhere between UTC−12 and UTC+12,
+ * which always puts the instant within 12 hours before or after that day's UTC
+ * midnight, so the UTC date half a day later is the day that was meant.
+ */
+function parseStoredDate(value: string): Date | null {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return parseStrictDate(value);
+
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) return null;
+  if (
+    instant.getHours() === 0 &&
+    instant.getMinutes() === 0 &&
+    instant.getSeconds() === 0 &&
+    instant.getMilliseconds() === 0
+  ) {
+    return instant;
+  }
+  const shifted = new Date(instant.getTime() + HALF_DAY_MS);
+  return new Date(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
 }
 
 /**
@@ -103,8 +139,8 @@ export function deserializeUserData(data: unknown): UserData | null {
   if (typeof raw.birthDate !== 'string') return null;
   if (typeof raw.endAge !== 'number' || raw.endAge < 1 || raw.endAge > 120) return null;
 
-  const birthDate = new Date(raw.birthDate);
-  if (!isValidDate(birthDate)) return null;
+  const birthDate = parseStoredDate(raw.birthDate);
+  if (!birthDate) return null;
 
   const rawEvents = Array.isArray(raw.events) ? raw.events : [];
   const events: LifeEvent[] = [];
@@ -116,9 +152,9 @@ export function deserializeUserData(data: unknown): UserData | null {
       return null;
     }
 
-    const startDate = new Date(e.startDate);
-    const endDate = new Date(e.endDate);
-    if (!isValidDate(startDate) || !isValidDate(endDate)) return null;
+    const startDate = parseStoredDate(e.startDate);
+    const endDate = parseStoredDate(e.endDate);
+    if (!startDate || !endDate) return null;
 
     const weekRange = mapDateRangeToWeeks(birthDate, startDate, endDate);
 

@@ -63,6 +63,7 @@ import {
   FaBatteryEmpty,
 } from 'react-icons/fa';
 import { IconType } from 'react-icons';
+import { isValidElement, ReactElement, ReactNode } from 'react';
 
 export interface IconOption {
   name: string;
@@ -146,4 +147,54 @@ export const iconOptions: IconOption[] = [
 export function getIconComponent(iconName: string): IconType | null {
   const iconOption = iconOptions.find(option => option.name === iconName);
   return iconOption ? iconOption.icon : null;
+}
+
+export interface SvgNode {
+  tag: string;
+  attrs: Record<string, string>;
+  children: SvgNode[];
+}
+
+export interface IconShape {
+  viewBox: string;
+  nodes: SvgNode[];
+}
+
+const camelToKebab = (name: string) => (name === 'viewBox' ? name : name.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`));
+
+function toSvgNodes(node: ReactNode): SvgNode[] {
+  if (Array.isArray(node)) return node.flatMap(toSvgNodes);
+  if (!isValidElement(node) || typeof node.type !== 'string') return [];
+  const { children, ...props } = node.props as Record<string, unknown> & { children?: ReactNode };
+  const attrs: Record<string, string> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value === 'string' || typeof value === 'number') attrs[camelToKebab(key)] = String(value);
+  }
+  return [{ tag: node.type, attrs, children: toSvgNodes(children) }];
+}
+
+const shapeCache = new Map<string, IconShape | null>();
+
+/**
+ * An icon's raw SVG shapes, for the poster export, which writes markup rather
+ * than rendering React.
+ *
+ * react-icons components are plain functions that return an IconBase element
+ * carrying the viewBox in `attr` and the shapes as children, so calling one
+ * reads its data without rendering anything. That shape is react-icons'
+ * internals, not its API: anything unexpected gives null and the poster just
+ * leaves the icon out. A test checks every icon in the catalogue still yields one.
+ */
+export function getIconShape(iconName: string): IconShape | null {
+  if (shapeCache.has(iconName)) return shapeCache.get(iconName)!;
+  let shape: IconShape | null = null;
+  const Icon = getIconComponent(iconName);
+  if (Icon) {
+    const element = Icon({}) as ReactElement<{ attr?: { viewBox?: unknown }; children?: ReactNode }> | null;
+    const viewBox = isValidElement(element) ? element.props.attr?.viewBox : undefined;
+    const nodes = isValidElement(element) ? toSvgNodes(element.props.children) : [];
+    if (typeof viewBox === 'string' && nodes.length > 0) shape = { viewBox, nodes };
+  }
+  shapeCache.set(iconName, shape);
+  return shape;
 }

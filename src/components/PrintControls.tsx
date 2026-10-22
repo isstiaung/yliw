@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PrintSize } from '@/types';
 import { printConfigs, applyPrintStyles, removePrintStyles } from '@/utils/printStyles';
 import { FaPrint } from 'react-icons/fa';
@@ -12,22 +12,23 @@ interface PrintControlsProps {
 export default function PrintControls({ className = '' }: PrintControlsProps) {
   const [selectedSize, setSelectedSize] = useState<PrintSize>('A4');
 
+  // The rules are all inside @media print, so they can stay in the page for as
+  // long as the calendar is open. Injecting them only around the button's
+  // print() call left Ctrl/Cmd+P printing the whole screen, sidebar and all,
+  // and a timer to remove them could fire while a non-blocking print dialog
+  // (Safari, mobile) was still laying out the page.
+  useEffect(() => {
+    applyPrintStyles(selectedSize);
+  }, [selectedSize]);
+
+  useEffect(() => removePrintStyles, []);
+
   const handleSizeChange = (size: PrintSize) => {
     setSelectedSize(size);
   };
 
   const handlePrint = () => {
-    applyPrintStyles(selectedSize);
-    
-    // Small delay to ensure styles are applied
-    setTimeout(() => {
-      window.print();
-      
-      // Clean up after printing
-      setTimeout(() => {
-        removePrintStyles();
-      }, 1000);
-    }, 100);
+    window.print();
   };
 
   return (

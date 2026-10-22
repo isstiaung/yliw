@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLifeData } from '@/contexts/LifeDataContext';
-import { generateWeekData } from '@/utils/dateCalculations';
+import { generateWeekData, isLabelledAge, summarizeWeeks } from '@/utils/dateCalculations';
 import WeekBox from './WeekBox';
 import WeekTooltip, { TooltipTarget } from './WeekTooltip';
 import { nextWeekForKey, WEEKS_PER_ROW } from '@/utils/gridNavigation';
@@ -155,12 +155,10 @@ export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
     }
   };
 
-  // Group weeks by year so we can render age labels alongside the grid
-  const years = Array.from({ length: userData.endAge }, (_, i) => i + 1);
+  // One label slot per row; row n is age n
+  const ages = Array.from({ length: userData.endAge }, (_, age) => age);
 
-  const weeksLived = weekData.filter(w => w.isPast).length;
-  const weeksRemaining = weekData.filter(w => !w.isPast && !w.isCurrent).length;
-  const pctLived = Math.round((weeksLived / weekData.length) * 100);
+  const { lived: weeksLived, remaining: weeksRemaining, percentLived: pctLived } = summarizeWeeks(weekData);
 
   const stats = [
     { label: 'Weeks lived', value: weeksLived.toLocaleString() },
@@ -258,7 +256,7 @@ export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
                 onPointerOver={handlePointerOver}
                 onPointerLeave={clearTooltip}
               >
-                <WeekTooltip target={tooltip} />
+                <WeekTooltip target={tooltip} birthDate={userData.birthDate} />
 
                 {/* Focus ring as an overlay rather than a class on the active
                     cell: arrow keys then change no props on any of the 4,680
@@ -306,13 +304,13 @@ export default function LifeGrid({ sharedData, banner }: LifeGridProps = {}) {
                       rowGap: 'var(--week-gap)',
                     }}
                   >
-                    {years.map(year => (
+                    {ages.map(age => (
                       <div
-                        key={year}
+                        key={age}
                         className="font-mono text-[var(--muted)]/70 text-right flex items-center justify-end pr-1"
                         style={{ fontSize: 'calc(var(--week-size) * 0.85)' }}
                       >
-                        {year % 5 === 0 ? year : ''}
+                        {isLabelledAge(age) ? age : ''}
                       </div>
                     ))}
                   </div>
