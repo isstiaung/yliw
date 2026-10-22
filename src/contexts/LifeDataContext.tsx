@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { UserData, LifeEvent, AppPhase } from '@/types';
-import { saveUserData, loadUserData } from '@/utils/localStorage';
+import { saveUserData, loadUserData, clearUserData } from '@/utils/localStorage';
 import { mapDateRangeToWeeks } from '@/utils/dateCalculations';
 
 interface LifeDataState {
@@ -160,6 +160,9 @@ export function LifeDataProvider({ children }: { children: ReactNode }) {
   };
 
   const clearData = () => {
+    // The save effect only ever writes, and skips a null calendar, so storage
+    // has to be cleared here or the calendar comes back on the next load.
+    clearUserData();
     dispatch({ type: 'CLEAR_DATA' });
   };
 
