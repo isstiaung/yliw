@@ -111,6 +111,16 @@ test.describe('layout', () => {
     });
   }
 
+  test('Ctrl/Cmd+P prints just the poster, without pressing Print', async ({ calendar: page }) => {
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByRole('heading', { name: 'Appearance' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Start over' })).toBeHidden();
+    await expect(page.getByRole('grid')).toBeVisible();
+    const size = await page.evaluate(() =>
+      getComputedStyle(document.querySelector('.life-grid')!).getPropertyValue('--week-size').trim());
+    expect(size).toBe('7px'); // A4, the default
+  });
+
   test('print styles override screen sizing per paper size', async ({ calendar: page }) => {
     await page.evaluate(() => { window.print = () => {}; });
     const size = () => page.evaluate(() =>
