@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/isstiaung/yliw/discussions
     about: Ask a question or talk through an idea before it becomes an issue.
   - name: Report a security vulnerability
-    url: https://github.com/isstiaung/yliw/security/advisories/new
-    about: Please report security issues privately, not as a public issue.
+    url: https://github.com/isstiaung/yliw/blob/main/SECURITY.md#reporting-a-vulnerability
+    about: Read this first — some reports should not include details in a public issue.
