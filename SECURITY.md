@@ -30,17 +30,19 @@ branches, and fixes land on `main`.
 
 ## Reporting a vulnerability
 
-**Please do not open a public issue for a security report.**
+Report it by [opening an issue](https://github.com/isstiaung/yliw/issues/new).
+yliw has no server and holds nobody's data, so most reports — a weakness in
+how protected links are encrypted, say, or a reachable dependency advisory —
+are fine to discuss in public.
 
-Report it privately through **GitHub Security Advisories**:
-<https://github.com/isstiaung/yliw/security/advisories/new>
+**If the issue could be used against someone else**, such as script injection
+through a crafted share link or import file, please do not post the details.
+Open an issue that says only that you have a security report and how to reach
+you, and the maintainer will get in touch to take it from there. That keeps a
+working exploit out of public view until a fix has shipped.
 
-That channel is private between you and the maintainer, it lets us discuss a
-fix before anything is public, and it can issue a CVE and credit you when the
-advisory is published. No email address is listed here deliberately — a public
-inbox in a public repo is a spam magnet, and the advisory flow is better for
-both of us. If you cannot use it for some reason, open a normal issue saying
-only that you have a security report and how to reach you, with no details.
+There is deliberately no email address here: a public inbox in a public repo
+is a spam magnet.
 
 Please include:
 
@@ -56,7 +58,7 @@ treat these as intentions rather than an SLA:
 
 - Acknowledgement within about 7 days
 - An assessment and a rough fix timeline within about 30 days
-- Credit in the advisory and release notes, unless you would rather stay
+- Credit in the fix's commit and release notes, unless you would rather stay
   anonymous
 
 Please give us a reasonable window to ship a fix before disclosing publicly.
