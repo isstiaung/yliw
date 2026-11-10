@@ -233,8 +233,12 @@ The app is configured for [static export](https://nextjs.org/docs/app/guides/sta
 (`output: "export"` in `next.config.ts`), because it is entirely client-side.
 `npm run build` produces a plain HTML/CSS/JS bundle in `out/` that you can drop
 on any static host — Cloudflare Pages or Workers, Netlify, Vercel, GitHub
-Pages, or an S3 bucket. There is nothing to configure and no environment
-variables to set.
+Pages, or an S3 bucket. Nothing needs configuring. If you deploy a fork at
+your own domain, build with `SITE_URL=https://your.domain npm run build`, so
+that link previews, the canonical URL, `robots.txt` and the sitemap point at
+your site instead of yliw.isstiaung.me. The preview image is
+`public/og-image.png`; re-render it for your domain with
+`SITE_URL=https://your.domain node scripts/og-image.mjs`.
 
 The public instance at [yliw.isstiaung.me](https://yliw.isstiaung.me) runs
 on Cloudflare Workers static assets. Cloudflare builds and deploys it whenever
