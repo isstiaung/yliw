@@ -4,6 +4,7 @@ import "./globals.css";
 import { LifeDataProvider } from "@/contexts/LifeDataContext";
 import { themeInitScript } from "@/utils/themes";
 import ServiceWorker from "@/components/ServiceWorker";
+import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/utils/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +30,36 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Your Life In Weeks",
-  description: "Visualize your life as a calendar of weeks with important events and milestones",
-  applicationName: "Your Life In Weeks",
+  metadataBase: new URL(SITE_URL),
+  title: { default: SITE_TITLE, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   appleWebApp: { capable: true, title: "Life in Weeks", statusBarStyle: "default" },
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    locale: "en",
+    images: [OG_IMAGE],
+  },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [OG_IMAGE] },
+};
+
+// Lets search engines show the app as what it is: a free web app, not an article.
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Any",
+  browserRequirements: "Requires JavaScript",
+  isAccessibleForFree: true,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 };
 
 export const viewport: Viewport = {
@@ -52,6 +79,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${caveat.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script
+          type="application/ld+json"
+          // `<` escaped so no field can ever close the script tag early.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+        />
         <ServiceWorker />
         <LifeDataProvider>
           {children}
