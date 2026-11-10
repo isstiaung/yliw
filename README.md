@@ -6,6 +6,11 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://yliw.isstiaung.me">Try it at yliw.isstiaung.me</a></strong>
+  — nothing to sign up for, and your data never leaves your browser.
+</p>
+
+<p align="center">
   <a href="#license"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://github.com/isstiaung/yliw/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/isstiaung/yliw/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white">
@@ -230,6 +235,10 @@ The app is configured for [static export](https://nextjs.org/docs/app/guides/sta
 on any static host — Cloudflare Pages or Workers, Netlify, Vercel, GitHub
 Pages, or an S3 bucket. There is nothing to configure and no environment
 variables to set.
+
+The public instance at [yliw.isstiaung.me](https://yliw.isstiaung.me) runs
+on Cloudflare Workers static assets. Cloudflare builds and deploys it whenever
+`main` is merged into the `deploy-worker` branch.
 
 Build with `npm run build` rather than `next build` directly: the `postbuild`
 step (`scripts/sw-version.mjs`) gives each build's service worker its own
